@@ -4,7 +4,18 @@ import { PrismaLibSql } from "@prisma/adapter-libsql";
 function createPrismaClient() {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL tanımlı değil");
-  const adapter = new PrismaLibSql({ url });
+
+  // libsql:// URL'den authToken'ı parse et (Turso format: url?authToken=xxx)
+  let libsqlUrl = url;
+  let authToken: string | undefined;
+
+  if (url.includes("?authToken=")) {
+    const [baseUrl, tokenPart] = url.split("?authToken=");
+    libsqlUrl = baseUrl;
+    authToken = tokenPart;
+  }
+
+  const adapter = new PrismaLibSql({ url: libsqlUrl, authToken });
   return new PrismaClient({ adapter });
 }
 
