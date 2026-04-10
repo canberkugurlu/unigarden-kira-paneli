@@ -147,24 +147,27 @@ function MenuGrubu({ grup, pathname }: { grup: MenuGroup; pathname: string }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 h-screen sticky top-0 bg-gray-900 text-white flex flex-col">
+    <aside className="w-64 h-full bg-gray-900 text-white flex flex-col">
       {/* Logo */}
-      <Link href="/" className="px-5 py-4 border-b border-gray-700/60 shrink-0 flex items-center gap-3 hover:bg-gray-800/40 transition-colors">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/UNIGARDEN_LOGO_nobg.png"
-          alt="Unigarden Logo"
-          className="w-10 h-10 object-contain shrink-0"
-        />
-        <p className="text-xs text-gray-400 leading-tight">Kira Yönetim Paneli</p>
-      </Link>
+      <div className="px-5 py-4 border-b border-gray-700/60 shrink-0 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/UNIGARDEN_LOGO_nobg.png" alt="Unigarden Logo" className="w-10 h-10 object-contain shrink-0" />
+          <p className="text-xs text-gray-400 leading-tight">Kira Yönetim Paneli</p>
+        </Link>
+        {onClose && (
+          <button onClick={onClose} className="md:hidden p-1 text-gray-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        )}
+      </div>
 
       {/* Nav — kaydırılabilir */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1 scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-gray-700">
+      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
         {MENU.map((grup, i) => (
           <MenuGrubu key={i} grup={grup} pathname={pathname} />
         ))}

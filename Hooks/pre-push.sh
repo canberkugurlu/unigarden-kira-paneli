@@ -8,7 +8,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
 BLUE='\033[0;34m'; BOLD='\033[1m'; NC='\033[0m'
@@ -76,8 +76,8 @@ SECRET_HITS=$(grep -rn "NEXTAUTH_SECRET\s*=\s*\"[^\"]\|password\s*=\s*\"[^\"]\|a
 [ "$SECRET_HITS" -eq 0 ] && ok "Hardcoded secret yok" || fail "$SECRET_HITS adet hardcoded secret bulundu"
 
 # ── 6. API testleri (sunucu çalışıyorsa) ─────────────────────
-source "$SCRIPT_DIR/config.sh"
-if curl -s -o /dev/null "$BASE_URL" 2>/dev/null; then
+[ -f "$SCRIPT_DIR/config.sh" ] && source "$SCRIPT_DIR/config.sh" || BASE_URL=""
+if [ -n "$BASE_URL" ] && curl -s -o /dev/null "$BASE_URL" 2>/dev/null; then
   log "Sunucu çalışıyor, API testleri başlatılıyor"
   if bash "$SCRIPT_DIR/api-test.sh"; then
     ok "API testleri geçti"
