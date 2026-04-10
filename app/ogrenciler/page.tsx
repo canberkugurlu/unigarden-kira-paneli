@@ -121,8 +121,11 @@ function OgrenciModal({ initial, onClose, onSaved }: { initial?: Ogrenci; onClos
     setForm(p => ({ ...p, [k]: e.target.value }));
 
   const save = async () => {
-    if (!form.ad || !form.soyad || form.tcKimlik.length !== 11 || !form.telefon || !form.email) {
-      setHata("Ad, soyad, 11 haneli TC, telefon ve e-posta zorunludur."); return;
+    if (!form.ad || !form.soyad || !form.telefon) {
+      setHata("Ad, soyad ve telefon zorunludur."); return;
+    }
+    if (form.tcKimlik && form.tcKimlik.length !== 11) {
+      setHata("TC Kimlik No 11 haneli olmalıdır."); return;
     }
     setSaving(true); setHata("");
     const url = initial ? `/api/ogrenciler/${initial.id}` : "/api/ogrenciler";
@@ -133,8 +136,9 @@ function OgrenciModal({ initial, onClose, onSaved }: { initial?: Ogrenci; onClos
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-y-auto py-8">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl flex flex-col max-h-[90vh]">
+        <div className="overflow-y-auto flex-1 p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-800">{initial ? "Kiracı Düzenle" : "Yeni Kiracı"}</h3>
           <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
@@ -268,7 +272,8 @@ function OgrenciModal({ initial, onClose, onSaved }: { initial?: Ogrenci; onClos
             </div>
           )}
         </div>
-        <div className="flex gap-3 mt-4">
+        </div>
+        <div className="flex gap-3 p-4 border-t border-gray-100 shrink-0">
           <button onClick={onClose} className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg text-sm">İptal</button>
           <button onClick={save} disabled={saving} className="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-sm hover:bg-emerald-700 disabled:opacity-60">
             {saving ? "Kaydediliyor..." : "Kaydet"}
