@@ -147,23 +147,18 @@ function MenuGrubu({ grup, pathname }: { grup: MenuGroup; pathname: string }) {
   );
 }
 
-export default function Sidebar({ onClose }: { onClose?: () => void }) {
+export default function Sidebar() {
   const pathname = usePathname();
 
   return (
     <aside className="w-64 h-full bg-gray-900 text-white flex flex-col">
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-700/60 shrink-0 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-gray-700/60 shrink-0">
         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/UNIGARDEN_LOGO_nobg.png" alt="Unigarden Logo" className="w-10 h-10 object-contain shrink-0" />
           <p className="text-xs text-gray-400 leading-tight">Kira Yönetim Paneli</p>
         </Link>
-        {onClose && (
-          <button onClick={onClose} className="md:hidden p-1 text-gray-400 hover:text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        )}
       </div>
 
       {/* Nav — kaydırılabilir */}
