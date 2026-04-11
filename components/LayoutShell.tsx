@@ -6,7 +6,7 @@ import Header from "./Header";
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <div className="w-64 shrink-0">
+      <div className="w-64 shrink-0 h-full">
         <Sidebar />
       </div>
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

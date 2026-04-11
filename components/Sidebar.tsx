@@ -89,7 +89,7 @@ interface MenuGroup {
 }
 
 function MenuGrubu({ grup, pathname }: { grup: MenuGroup; pathname: string }) {
-  const [acik, setAcik] = useState(false);
+  const [acik, setAcik] = useState(true);
 
   return (
     <div>
@@ -108,7 +108,7 @@ function MenuGrubu({ grup, pathname }: { grup: MenuGroup; pathname: string }) {
         </button>
       )}
 
-      {acik && (
+      {(acik || !grup.baslik) && (
         <div className="space-y-0.5">
           {grup.items.map(({ href, label, icon: Icon, harici }) => {
             const active = !harici && pathname === href;
