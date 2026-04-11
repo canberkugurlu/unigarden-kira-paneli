@@ -1436,8 +1436,59 @@ export default function KonutlarPage() {
     etap: e, sayi: konutlar.filter(k => k.etap === e).length,
   }));
 
+  // ── Özet istatistikler (aktif etap sekmesine göre) ───────────────────────────
+  const istatistikHam = aktifEtap === "tumu" ? konutlar
+    : aktifEtap === 1 ? etap1Ham
+    : aktifEtap === 2 ? etap2Ham
+    : etap3Ham;
+
+  const istat = {
+    toplam:   istatistikHam.length,
+    dolu:     istatistikHam.filter(k => k.durum === "Dolu").length,
+    bos:      istatistikHam.filter(k => k.durum === "Bos").length,
+    bakimda:  istatistikHam.filter(k => k.durum === "Bakimda").length,
+    kiraci:   istatistikHam.reduce((acc, k) => {
+      const aktifKiracılar = (k.sozlesmeler ?? []).filter(s => s.durum === "Aktif" && s.ogrenci);
+      return acc + aktifKiracılar.length;
+    }, 0),
+    dolulukOrani: istatistikHam.length > 0
+      ? Math.round((istatistikHam.filter(k => k.durum === "Dolu").length / istatistikHam.length) * 100)
+      : 0,
+  };
+
   return (
     <div className="space-y-4">
+      {/* Özet Kartları */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-gray-500 font-medium">Toplam Daire</span>
+          <span className="text-2xl font-bold text-gray-800">{istat.toplam}</span>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-red-500 font-medium">Dolu</span>
+          <span className="text-2xl font-bold text-red-600">{istat.dolu}</span>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-emerald-600 font-medium">Boş</span>
+          <span className="text-2xl font-bold text-emerald-600">{istat.bos}</span>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-yellow-600 font-medium">Bakımda</span>
+          <span className="text-2xl font-bold text-yellow-600">{istat.bakimda}</span>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-blue-500 font-medium">Aktif Kiracı</span>
+          <span className="text-2xl font-bold text-blue-600">{istat.kiraci}</span>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-1">
+          <span className="text-xs text-purple-500 font-medium">Doluluk Oranı</span>
+          <span className="text-2xl font-bold text-purple-600">{istat.dolulukOrani}%</span>
+          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">
+            <div className="bg-purple-500 h-1.5 rounded-full transition-all" style={{ width: `${istat.dolulukOrani}%` }} />
+          </div>
+        </div>
+      </div>
+
       {/* Etap sekmeleri */}
       <div className="flex gap-1 border-b border-gray-200">
         <button onClick={() => setAktifEtap("tumu")}
