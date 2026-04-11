@@ -7,6 +7,7 @@ type TenantRow = {
   ad: string; soyad: string; telefon: string;
   tcKimlik: string | null; email: string | null;
   kiraBedeli: number | null; baslangiç: string | null; bitis: string | null;
+  basRaw?: string | null; bitisRaw?: string | null; bitRaw?: string | null;
 };
 type DaireRow = { no: string; tip: string; daire_sahibi: string | null };
 
