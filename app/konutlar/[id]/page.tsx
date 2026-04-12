@@ -228,13 +228,32 @@ export default function DaireKartPage() {
   );
 
   const daireTema   = getDaireTema(konut.blok, konut.etap, konut.ozellikler);
-  const aktifSoz    = konut.sozlesmeler.find(s => s.durum === "Aktif");
-  const gecmisSoz   = konut.sozlesmeler.filter(s => s.durum !== "Aktif");
+  const aktifSozler = konut.sozlesmeler.filter(s => s.durum === "Aktif").sort((a, b) => (a.oda ?? "").localeCompare(b.oda ?? ""));
+  const aktifSoz    = aktifSozler[0];
   const toplamKiraci = new Set(konut.sozlesmeler.map(s => s.ogrenci?.id).filter(Boolean)).size;
   const toplamGelir  = konut.sozlesmeler.flatMap(s => s.odemeler).reduce((sum, o) => sum + o.tutar, 0);
   const bekleyenBakim = konut.bakimTalepleri.filter(b => b.durum !== "Tamamlandi" && b.durum !== "Iptal").length;
   const ozellikler   = parseOzellikler(konut.ozellikler);
-  const kalanGun     = aktifSoz ? Math.ceil((new Date(aktifSoz.bitisTarihi).getTime() - Date.now()) / 86400000) : null;
+  const toplamAktifKira = aktifSozler.reduce((s, x) => s + x.aylikKira, 0);
+  // Yurt dairesi (2 oda) mi?
+  const isYurt    = konut.etap === 2 && ["A","B","C","D","E","F"].includes((konut.blok ?? "").charAt(0).toUpperCase());
+  const odaSayisi = isYurt ? 2 : 1;
+  // Toplam liste kira: yurtta konut.kiraBedeli * 2 (iki odanın toplam liste fiyatı)
+  const toplamListeKira = konut.kiraBedeli * odaSayisi;
+  // Doluluk yüzdesi (yurt için)
+  const dolulukYuzde = isYurt
+    ? Math.round((aktifSozler.length / odaSayisi) * 100)
+    : (konut.durum === "Dolu" ? 100 : 0);
+  const dolulukLabel = isYurt
+    ? (aktifSozler.length === 0 ? "Boş" : aktifSozler.length >= odaSayisi ? "Dolu" : `%${dolulukYuzde}`)
+    : (DURUM_LABEL[konut.durum] ?? konut.durum);
+  // En erken biten aktif sözleşmenin kalan süresi
+  const enErkenBitis = aktifSozler.length > 0
+    ? aktifSozler.reduce((min, s) => new Date(s.bitisTarihi) < new Date(min.bitisTarihi) ? s : min)
+    : null;
+  const kalanGun = enErkenBitis ? Math.ceil((new Date(enErkenBitis.bitisTarihi).getTime() - Date.now()) / 86400000) : null;
+  const kalanAy  = kalanGun !== null ? Math.floor(Math.max(0, kalanGun) / 30) : null;
+  const kalanGunKalan = kalanGun !== null ? Math.max(0, kalanGun) % 30 : null;
   const odenenAidat  = konut.aidatlar.filter(a => a.durum === "Odendi").length;
 
   const TABS = [
@@ -272,8 +291,14 @@ export default function DaireKartPage() {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-xl font-bold text-gray-900">Blok {konut.blok} · Daire {konut.daireNo}</h1>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${DURUM_RENK[konut.durum] ?? "bg-gray-100 text-gray-500"}`}>
-                    {DURUM_LABEL[konut.durum] ?? konut.durum}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    isYurt
+                      ? (aktifSozler.length === 0 ? "bg-green-100 text-green-700"
+                         : aktifSozler.length >= odaSayisi ? "bg-red-100 text-red-700"
+                         : "bg-yellow-100 text-yellow-700")
+                      : (DURUM_RENK[konut.durum] ?? "bg-gray-100 text-gray-500")
+                  }`}>
+                    {dolulukLabel}
                   </span>
                   <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{konut.etap}. Etap</span>
                   {daireTema && (
@@ -298,12 +323,12 @@ export default function DaireKartPage() {
             {/* Sağ: istatistikler */}
             <div className="flex items-center gap-6 flex-wrap">
               <div className="text-center">
-                <p className={`text-xl font-bold ${daireTema ? daireTema.accent : "text-emerald-600"}`}>{para(aktifSoz?.aylikKira ?? konut.kiraBedeli)}</p>
-                <p className="text-xs text-gray-400">{aktifSoz ? "Aktif Kira" : "Liste Kira"}</p>
+                <p className={`text-xl font-bold ${daireTema ? daireTema.accent : "text-emerald-600"}`}>{para(toplamAktifKira || toplamListeKira)}</p>
+                <p className="text-xs text-gray-400">{aktifSozler.length > 0 ? "Toplam Kira" : "Liste Kira"}</p>
               </div>
               <div className="text-center">
-                <p className="text-xl font-bold text-gray-700">{toplamKiraci}</p>
-                <p className="text-xs text-gray-400">Toplam Kiracı</p>
+                <p className="text-xl font-bold text-gray-700">{aktifSozler.length}</p>
+                <p className="text-xs text-gray-400">Aktif Kiracı</p>
               </div>
               <div className="text-center">
                 <p className="text-xl font-bold text-blue-600">{para(toplamGelir)}</p>
@@ -311,31 +336,38 @@ export default function DaireKartPage() {
               </div>
               {kalanGun !== null && (
                 <div className="text-center">
-                  <p className={`text-xl font-bold ${kalanGun < 30 ? "text-red-600" : kalanGun < 90 ? "text-yellow-600" : "text-gray-700"}`}>{kalanGun}g</p>
+                  <p className={`text-xl font-bold ${kalanGun < 30 ? "text-red-600" : kalanGun < 90 ? "text-yellow-600" : "text-gray-700"}`}>
+                    {kalanAy! > 0 ? `${kalanAy}a` : ""}{kalanAy! > 0 && kalanGunKalan! > 0 ? " " : ""}{kalanGunKalan! > 0 || kalanAy === 0 ? `${kalanGunKalan}g` : ""}
+                  </p>
                   <p className="text-xs text-gray-400">Bitiş</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Aktif kiracı banner */}
-          {aktifSoz && (
-            <div className={`mt-4 ${daireTema ? `${daireTema.bannerBg} border ${daireTema.bannerBorder}` : "bg-red-50 border border-red-100"} rounded-xl px-4 py-3 flex items-center gap-3`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0
-                ${aktifSoz.ogrenci.cinsiyet === "Erkek" ? "bg-blue-100 text-blue-600" : aktifSoz.ogrenci.cinsiyet === "Kadın" ? "bg-pink-100 text-pink-600" : "bg-violet-100 text-violet-600"}`}>
-                {aktifSoz.ogrenci.ad[0]}{aktifSoz.ogrenci.soyad[0]}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-800">
-                  {aktifSoz.ogrenci.ad} {aktifSoz.ogrenci.soyad}
-                  {aktifSoz.oda && <span className="ml-2 text-xs font-normal text-gray-500">({aktifSoz.oda})</span>}
-                </p>
-                <p className="text-xs text-gray-500">{aktifSoz.ogrenci.telefon} · {fmt(aktifSoz.baslangicTarihi)} – {fmt(aktifSoz.bitisTarihi)}</p>
-              </div>
-              <button onClick={() => router.push(`/ogrenciler/${aktifSoz.ogrenci.id}`)}
-                className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 border border-emerald-200 rounded-lg px-2.5 py-1.5">
-                Kiracı Kartı <ChevronRight size={12} />
-              </button>
+          {/* Aktif kiracı banner — her aktif sözleşme için ayrı satır */}
+          {aktifSozler.length > 0 && (
+            <div className={`mt-4 ${daireTema ? `${daireTema.bannerBg} border ${daireTema.bannerBorder}` : "bg-red-50 border border-red-100"} rounded-xl px-4 py-2 divide-y ${daireTema ? daireTema.bannerBorder : "divide-red-100"}`}>
+              {aktifSozler.map((s) => (
+                <div key={s.id} className="py-2 flex items-center gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0
+                    ${s.ogrenci.cinsiyet === "Erkek" ? "bg-blue-100 text-blue-600" : s.ogrenci.cinsiyet === "Kadın" ? "bg-pink-100 text-pink-600" : "bg-violet-100 text-violet-600"}`}>
+                    {s.ogrenci.ad[0]}{s.ogrenci.soyad[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {s.ogrenci.ad} {s.ogrenci.soyad}
+                      {s.oda && <span className="ml-2 text-xs font-normal text-gray-500">({s.oda})</span>}
+                      <span className={`ml-2 text-xs font-medium ${daireTema?.accent ?? "text-gray-600"}`}>{para(s.aylikKira)}</span>
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{s.ogrenci.telefon} · {fmt(s.baslangicTarihi)} – {fmt(s.bitisTarihi)}</p>
+                  </div>
+                  <button onClick={() => router.push(`/ogrenciler/${s.ogrenci.id}`)}
+                    className={`text-xs ${daireTema?.accent ?? "text-emerald-600"} hover:underline flex items-center gap-1 border ${daireTema?.bannerBorder ?? "border-emerald-200"} rounded-lg px-2.5 py-1.5 shrink-0 bg-white`}>
+                    Kiracı Kartı <ChevronRight size={12} />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
 
@@ -379,8 +411,8 @@ export default function DaireKartPage() {
             <InfoSatir label="Tip"        value={konut.tip} />
             <InfoSatir label="Alan"       value={`${konut.metrekare} m²`} />
             <InfoSatir label="Etap"       value={`${konut.etap}. Etap`} />
-            <InfoSatir label="Liste Kira" value={para(konut.kiraBedeli)} bold />
-            <InfoSatir label="Durum"      value={DURUM_LABEL[konut.durum] ?? konut.durum} />
+            <InfoSatir label={isYurt ? "Toplam Kira" : "Liste Kira"} value={para(toplamListeKira)} bold />
+            <InfoSatir label="Durum"      value={dolulukLabel} />
             {ozellikler.length > 0 && (
               <div className="pt-2 border-t border-gray-50">
                 <p className="text-xs text-gray-400 mb-2">ÖZELLİKLER</p>
