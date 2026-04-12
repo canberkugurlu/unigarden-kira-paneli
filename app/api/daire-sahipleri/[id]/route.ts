@@ -14,11 +14,21 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const data: Record<string, unknown> = {};
-  ["tip","ad","soyad","telefon","email","notlar","tcKimlik","vergiNo","unvan"].forEach(k => {
-    if (body[k] !== undefined) data[k] = body[k] === "" ? null : body[k];
+  const norm = (v: unknown) => v === "" ? null : v;
+  const sahibi = await prisma.daireSahibi.update({
+    where: { id },
+    data: {
+      ...(body.tip      !== undefined ? { tip:      body.tip as string } : {}),
+      ...(body.ad       !== undefined ? { ad:       body.ad } : {}),
+      ...(body.soyad    !== undefined ? { soyad:    body.soyad } : {}),
+      ...(body.telefon  !== undefined ? { telefon:  body.telefon } : {}),
+      ...(body.email    !== undefined ? { email:    norm(body.email)    as string | null } : {}),
+      ...(body.notlar   !== undefined ? { notlar:   norm(body.notlar)   as string | null } : {}),
+      ...(body.tcKimlik !== undefined ? { tcKimlik: norm(body.tcKimlik) as string | null } : {}),
+      ...(body.vergiNo  !== undefined ? { vergiNo:  norm(body.vergiNo)  as string | null } : {}),
+      ...(body.unvan    !== undefined ? { unvan:    norm(body.unvan)    as string | null } : {}),
+    },
   });
-  const sahibi = await prisma.daireSahibi.update({ where: { id }, data });
   return NextResponse.json(sahibi);
 }
 
