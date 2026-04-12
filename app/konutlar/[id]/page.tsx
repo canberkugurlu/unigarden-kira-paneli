@@ -70,6 +70,20 @@ function parseOzellikler(raw?: string): string[] {
   if (!raw) return [];
   try { return JSON.parse(raw); } catch { return raw.split(",").map(s => s.trim()).filter(Boolean); }
 }
+
+// 2. Etap yurt konsepti teması: A/B/C = Kız (açık pembe), D/E = Erkek (mavi)
+type DaireTema = { iconBg: string; bar: string; accent: string; bannerBg: string; bannerBorder: string; label: string };
+function getDaireTema(blok: string, etap: number): DaireTema | null {
+  if (etap !== 2) return null;
+  const u = (blok || "").charAt(0).toUpperCase();
+  if (["A", "B", "C"].includes(u)) {
+    return { iconBg: "bg-pink-400", bar: "bg-pink-400", accent: "text-pink-600", bannerBg: "bg-pink-50", bannerBorder: "border-pink-200", label: "Kız Yurdu" };
+  }
+  if (["D", "E"].includes(u)) {
+    return { iconBg: "bg-blue-500", bar: "bg-blue-500", accent: "text-blue-600", bannerBg: "bg-blue-50", bannerBorder: "border-blue-200", label: "Erkek Yurdu" };
+  }
+  return null;
+}
 function parseHasarlar(raw?: string): Hasar[] {
   if (!raw) return [];
   try { const p = JSON.parse(raw); return Array.isArray(p) ? p : []; } catch { return []; }
@@ -207,6 +221,7 @@ export default function DaireKartPage() {
     </div>
   );
 
+  const daireTema   = getDaireTema(konut.blok, konut.etap);
   const aktifSoz    = konut.sozlesmeler.find(s => s.durum === "Aktif");
   const gecmisSoz   = konut.sozlesmeler.filter(s => s.durum !== "Aktif");
   const toplamKiraci = new Set(konut.sozlesmeler.map(s => s.ogrenci?.id).filter(Boolean)).size;
@@ -239,13 +254,13 @@ export default function DaireKartPage() {
 
       {/* ── Hero Kart ── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className={`h-2 ${konut.durum === "Dolu" ? "bg-red-500" : konut.durum === "Bakimda" ? "bg-yellow-500" : "bg-emerald-500"}`} />
+        <div className={`h-2 ${daireTema ? daireTema.bar : konut.durum === "Dolu" ? "bg-red-500" : konut.durum === "Bakimda" ? "bg-yellow-500" : "bg-emerald-500"}`} />
 
         <div className="p-6">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             {/* Sol: kimlik */}
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center shrink-0">
+              <div className={`w-16 h-16 rounded-2xl ${daireTema ? daireTema.iconBg : "bg-emerald-600"} flex items-center justify-center shrink-0`}>
                 <Building2 size={28} className="text-white" />
               </div>
               <div>
@@ -255,6 +270,9 @@ export default function DaireKartPage() {
                     {DURUM_LABEL[konut.durum] ?? konut.durum}
                   </span>
                   <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{konut.etap}. Etap</span>
+                  {daireTema && (
+                    <span className={`text-xs ${daireTema.bannerBg} ${daireTema.accent} px-2 py-0.5 rounded-full font-medium border ${daireTema.bannerBorder}`}>{daireTema.label}</span>
+                  )}
                   {bekleyenBakim > 0 && (
                     <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                       <AlertTriangle size={11} /> {bekleyenBakim} Bakım Talebi
@@ -274,7 +292,7 @@ export default function DaireKartPage() {
             {/* Sağ: istatistikler */}
             <div className="flex items-center gap-6 flex-wrap">
               <div className="text-center">
-                <p className="text-xl font-bold text-emerald-600">{para(aktifSoz?.aylikKira ?? konut.kiraBedeli)}</p>
+                <p className={`text-xl font-bold ${daireTema ? daireTema.accent : "text-emerald-600"}`}>{para(aktifSoz?.aylikKira ?? konut.kiraBedeli)}</p>
                 <p className="text-xs text-gray-400">{aktifSoz ? "Aktif Kira" : "Liste Kira"}</p>
               </div>
               <div className="text-center">
@@ -296,7 +314,7 @@ export default function DaireKartPage() {
 
           {/* Aktif kiracı banner */}
           {aktifSoz && (
-            <div className="mt-4 bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className={`mt-4 ${daireTema ? `${daireTema.bannerBg} border ${daireTema.bannerBorder}` : "bg-red-50 border border-red-100"} rounded-xl px-4 py-3 flex items-center gap-3`}>
               <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0
                 ${aktifSoz.ogrenci.cinsiyet === "Erkek" ? "bg-blue-100 text-blue-600" : aktifSoz.ogrenci.cinsiyet === "Kadın" ? "bg-pink-100 text-pink-600" : "bg-violet-100 text-violet-600"}`}>
                 {aktifSoz.ogrenci.ad[0]}{aktifSoz.ogrenci.soyad[0]}

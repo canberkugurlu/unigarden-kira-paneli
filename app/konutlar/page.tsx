@@ -668,12 +668,25 @@ function Etap2DaireKart({ konut, onEdit, onSozlesme, onSahip }: {
 }
 
 // ─── Etap 2: Blok içi liste tablosu ──────────────────────────────────────────
-function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip }: {
+function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema }: {
   daireler: Konut[];
   onEdit: (k: Konut) => void;
   onSozlesme: (k: Konut, oda: string) => void;
   onSahip: (k: Konut) => void;
+  tema?: BlokTema;
 }) {
+  // Varsayılan (tema yoksa) mevcut gri görünüm korunur
+  const headerCls = tema ? tema.headerBg : "bg-gray-50";
+  const hoverCls  = tema ? tema.hoverRow : "hover:bg-gray-50/50";
+  const oda1Cls   = tema?.label === "Kız Yurdu"   ? "bg-pink-100 text-pink-700"
+                  : tema?.label === "Erkek Yurdu" ? "bg-blue-100 text-blue-700"
+                  : "bg-indigo-50 text-indigo-700";
+  const oda2Cls   = tema?.label === "Kız Yurdu"   ? "bg-rose-100 text-rose-700"
+                  : tema?.label === "Erkek Yurdu" ? "bg-sky-100 text-sky-700"
+                  : "bg-purple-50 text-purple-700";
+  const rowDivide = tema?.label === "Kız Yurdu"   ? "border-pink-200"
+                  : tema?.label === "Erkek Yurdu" ? "border-blue-200"
+                  : "border-gray-200";
   const fmt = (n: number) => n > 0 ? new Intl.NumberFormat("tr-TR").format(n) + " ₺" : "—";
   const sorted = [...daireler].sort((a, z) => {
     const parse = (d: string) => { const p = d.split("-").pop() ?? d; return { num: parseInt(p, 10) || 0, ltr: p.replace(/\d+/, "") }; };
@@ -684,7 +697,7 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip }: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
-        <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+        <thead className={`${headerCls} text-xs text-gray-500 uppercase tracking-wide`}>
           <tr>
             <th className="px-3 py-2 text-left">Daire</th>
             <th className="px-3 py-2 text-left">Oda</th>
@@ -704,7 +717,7 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip }: {
             return (
               <Fragment key={k.id}>
                 {odaRows.map(({ label, soz }, idx) => (
-                  <tr key={label} className={`hover:bg-gray-50/50 ${idx === 0 ? "border-t-2 border-gray-200" : "border-t border-dashed border-gray-100"}`}>
+                  <tr key={label} className={`${hoverCls} ${idx === 0 ? `border-t-2 ${rowDivide}` : "border-t border-dashed border-gray-100"}`}>
                     {idx === 0 && (
                       <td rowSpan={2} className="px-3 py-2 align-middle">
                         <div className="font-bold text-gray-800">{dairePart}</div>
@@ -712,7 +725,7 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip }: {
                       </td>
                     )}
                     <td className="px-3 py-2">
-                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${label === "Oda 1" ? "bg-indigo-50 text-indigo-700" : "bg-purple-50 text-purple-700"}`}>{label}</span>
+                      <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${label === "Oda 1" ? oda1Cls : oda2Cls}`}>{label}</span>
                     </td>
                     <td className="px-3 py-2">
                       {soz?.ogrenci ? (
@@ -756,7 +769,7 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
   blok: string; daireler: Konut[]; onRefresh: () => void;
 }) {
   const [acik, setAcik]           = useState(false);
-  const [gorunum, setGorunum]     = useState<"kart" | "liste">("kart");
+  const [gorunum, setGorunum]     = useState<"kart" | "liste">("liste");
   const [editKonut, setEditKonut] = useState<Konut | null>(null);
   const [sozKonut,  setSozKonut]  = useState<Konut | null>(null);
   const [sozOda,    setSozOda]    = useState<string | undefined>(undefined);
@@ -808,7 +821,7 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
           </div>
         ) : (
           <div className={tema.containerBg}>
-            <BlokListeTablosu daireler={sortedDaireler} onEdit={setEditKonut} onSozlesme={openSozlesme} onSahip={setSahKonut} />
+            <BlokListeTablosu daireler={sortedDaireler} onEdit={setEditKonut} onSozlesme={openSozlesme} onSahip={setSahKonut} tema={tema} />
           </div>
         )
       )}
@@ -875,7 +888,7 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
   parentBlok: string; konutlar: Konut[]; onRefresh: () => void;
 }) {
   const [acik,    setAcik]    = useState(false);
-  const [gorunum, setGorunum] = useState<"kart" | "liste">("kart");
+  const [gorunum, setGorunum] = useState<"kart" | "liste">("liste");
 
   // Non-A blocks: modal state
   const [editKonut, setEditKonut] = useState<Konut | null>(null);
@@ -948,6 +961,7 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
               onEdit={setEditKonut}
               onSozlesme={(k, oda) => { setSozKonut(k); setSozOda(oda); }}
               onSahip={setSahKonut}
+              tema={tema}
             />
           )}
         </div>
