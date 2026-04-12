@@ -404,12 +404,14 @@ export default function DaireSahipleriPage() {
   const gosterilen = sahipler.filter(s => {
     const q = arama.toLowerCase();
     if (!q) return true;
-    return `${s.ad} ${s.soyad}`.toLowerCase().includes(q) || s.tcKimlik.includes(q) || s.telefon.includes(q);
+    return `${s.ad} ${s.soyad}`.toLowerCase().includes(q) || (s.tcKimlik ?? "").includes(q) || (s.vergiNo ?? "").includes(q) || (s.unvan ?? "").toLowerCase().includes(q) || s.telefon.includes(q);
   });
 
   const exportExcel = () => {
     const rows = gosterilen.map(s => ({
-      "Ad": s.ad, "Soyad": s.soyad, "TC Kimlik": s.tcKimlik,
+      "Tip": s.tip ?? "Bireysel",
+      "Ad": s.ad, "Soyad": s.soyad, "TC Kimlik": s.tcKimlik ?? "",
+      "Vergi No": s.vergiNo ?? "", "Unvan": s.unvan ?? "",
       "Telefon": s.telefon, "E-posta": s.email ?? "",
       "Daire Sayısı": s.konutlar.length,
       "Daireler": s.konutlar.map(k => k.daireNo).join(", "),
