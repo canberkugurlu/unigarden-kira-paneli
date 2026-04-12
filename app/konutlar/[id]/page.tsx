@@ -47,11 +47,22 @@ interface Aidat {
 
 interface Belge { id: string; ad: string; tip: string; dosyaYolu: string; olusturmaTar: string; yukleyenTip: string }
 
+interface SahiplikKaydi {
+  id: string;
+  alisTarihi: string;
+  satisTarihi?: string | null;
+  alisFiyati?: number | null;
+  satisFiyati?: number | null;
+  notlar?: string | null;
+  daireSahibi: { id: string; ad: string; soyad: string; tcKimlik: string; telefon: string };
+}
+
 interface Konut {
   id: string; blok: string; katNo: number; daireNo: string;
   tip: string; metrekare: number; kiraBedeli: number; durum: string;
   ozellikler?: string; etap: number; olusturmaTar: string;
   daireSahibi?: DaireSahibi | null;
+  sahiplikler?: SahiplikKaydi[];
   sozlesmeler: Sozlesme[];
   bakimTalepleri: BakimTalebi[];
   teslimRaporlari: TeslimRaporu[];
@@ -434,6 +445,35 @@ export default function DaireKartPage() {
               <div className="flex flex-col items-center justify-center py-6 text-gray-300">
                 <UserCheck size={28} />
                 <p className="text-sm mt-2">Sahip atanmamış</p>
+              </div>
+            )}
+
+            {/* Sahiplik Geçmişi */}
+            {konut.sahiplikler && konut.sahiplikler.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Sahiplik Geçmişi</p>
+                <div className="space-y-2">
+                  {konut.sahiplikler.map(s => (
+                    <div key={s.id} className="bg-gray-50 rounded-lg px-3 py-2 text-xs">
+                      <div className="flex items-center justify-between flex-wrap gap-1">
+                        <button onClick={() => router.push(`/daire-sahipleri`)}
+                                className="font-semibold text-gray-800 hover:underline">
+                          {s.daireSahibi.ad} {s.daireSahibi.soyad}
+                        </button>
+                        {s.satisTarihi
+                          ? <span className="px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600">Satıldı</span>
+                          : <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Aktif Sahip</span>}
+                      </div>
+                      <div className="text-gray-500 mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span>Alış: <span className="text-gray-700">{fmt(s.alisTarihi)}</span></span>
+                        <span>Satış: <span className="text-gray-700">{s.satisTarihi ? fmt(s.satisTarihi) : "—"}</span></span>
+                        {s.alisFiyati  != null && <span>Alış: <span className="text-gray-700">{para(s.alisFiyati)}</span></span>}
+                        {s.satisFiyati != null && <span>Satış: <span className="text-gray-700">{para(s.satisFiyati)}</span></span>}
+                      </div>
+                      {s.notlar && <p className="text-gray-400 mt-0.5">{s.notlar}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </Bolum>

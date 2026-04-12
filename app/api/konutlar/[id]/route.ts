@@ -7,6 +7,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     where: { id },
     include: {
       daireSahibi: true,
+      sahiplikler: {
+        include: { daireSahibi: { select: { id: true, ad: true, soyad: true, tcKimlik: true, telefon: true } } },
+        orderBy: [{ alisTarihi: "desc" }],
+      },
       sozlesmeler: {
         include: {
           ogrenci: { select: { id: true, ad: true, soyad: true, telefon: true, email: true, cinsiyet: true, universite: true, kimlikBelgesi: true, ogrenciBelgesi: true } },

@@ -17,8 +17,27 @@ model DaireSahibi {
   sifre          String?
   olusturmaTar   DateTime           @default(now())
   konutlar       Konut[]
+  sahiplikler    DaireSahipligi[]
   bakimYorumlari BakimTalebiYorum[]
   belgeler       Belge[]
+}
+
+model DaireSahipligi {
+  id            String       @id @default(cuid())
+  konutId       String
+  konut         Konut        @relation(fields: [konutId], references: [id], onDelete: Cascade)
+  daireSahibiId String
+  daireSahibi   DaireSahibi  @relation(fields: [daireSahibiId], references: [id], onDelete: Cascade)
+  alisTarihi    DateTime
+  satisTarihi   DateTime?
+  alisFiyati    Float?
+  satisFiyati   Float?
+  notlar        String?
+  olusturmaTar  DateTime     @default(now())
+
+  @@index([konutId])
+  @@index([daireSahibiId])
+  @@index([alisTarihi])
 }
 
 model Konut {
@@ -35,6 +54,7 @@ model Konut {
   daireSahibiId  String?
   daireSahibi    DaireSahibi?  @relation(fields: [daireSahibiId], references: [id])
   olusturmaTar   DateTime      @default(now())
+  sahiplikler    DaireSahipligi[]
   sozlesmeler     Sozlesme[]
   bakimTalepleri  BakimTalebi[]
   belgeler        Belge[]

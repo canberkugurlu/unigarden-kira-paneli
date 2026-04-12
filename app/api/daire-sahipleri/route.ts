@@ -3,7 +3,13 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const sahipler = await prisma.daireSahibi.findMany({
-    include: { konutlar: { orderBy: { daireNo: "asc" } } },
+    include: {
+      konutlar: { orderBy: { daireNo: "asc" } },
+      sahiplikler: {
+        include: { konut: { select: { id: true, daireNo: true, blok: true, etap: true } } },
+        orderBy: [{ alisTarihi: "desc" }],
+      },
+    },
     orderBy: { ad: "asc" },
   });
   return NextResponse.json(sahipler);
