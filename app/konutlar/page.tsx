@@ -35,6 +35,53 @@ const EK_OZELLIKLER = [
 
 function getParentBlok(blok: string) { return blok.startsWith("A") ? "A" : blok; }
 
+// 2. Etap yurt konsepti: A/B/C = Kız (açık pembe), D/E = Erkek (mavi)
+type BlokTema = {
+  badge: string; btn: string; btnHover: string; btnActive: string;
+  containerBg: string; containerBorder: string; headerBg: string;
+  hoverRow: string; label: string;
+};
+function getBlokTema(blok: string): BlokTema {
+  const ust = (blok || "").charAt(0).toUpperCase();
+  if (["A", "B", "C"].includes(ust)) {
+    return {
+      badge:          "bg-pink-400",
+      btn:            "text-pink-600",
+      btnHover:       "hover:bg-pink-100",
+      btnActive:      "bg-pink-500 text-white",
+      containerBg:    "bg-pink-50/40",
+      containerBorder:"border-pink-200",
+      headerBg:       "bg-pink-50",
+      hoverRow:       "hover:bg-pink-50/60",
+      label:          "Kız Yurdu",
+    };
+  }
+  if (["D", "E"].includes(ust)) {
+    return {
+      badge:          "bg-blue-500",
+      btn:            "text-blue-600",
+      btnHover:       "hover:bg-blue-100",
+      btnActive:      "bg-blue-600 text-white",
+      containerBg:    "bg-blue-50/40",
+      containerBorder:"border-blue-200",
+      headerBg:       "bg-blue-50",
+      hoverRow:       "hover:bg-blue-50/60",
+      label:          "Erkek Yurdu",
+    };
+  }
+  return {
+    badge:          "bg-emerald-600",
+    btn:            "text-emerald-600",
+    btnHover:       "hover:bg-emerald-50",
+    btnActive:      "bg-emerald-600 text-white",
+    containerBg:    "bg-white",
+    containerBorder:"border-gray-100",
+    headerBg:       "bg-gray-50",
+    hoverRow:       "hover:bg-gray-50",
+    label:          "",
+  };
+}
+
 function sortDaireler(konutlar: Konut[]) {
   return [...konutlar].sort((a, z) => {
     if (a.blok !== z.blok) return a.blok.localeCompare(z.blok);
@@ -729,11 +776,13 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
 
   const openSozlesme = (konut: Konut, oda: string) => { setSozKonut(konut); setSozOda(oda); };
 
+  const tema = getBlokTema(blok);
+
   return (
-    <div className="border border-gray-100 rounded-xl overflow-hidden">
-      <div className="flex items-center px-4 py-3 bg-gray-50">
+    <div className={`border ${tema.containerBorder} rounded-xl overflow-hidden`}>
+      <div className={`flex items-center px-4 py-3 ${tema.headerBg}`}>
         <button onClick={() => setAcik(a => !a)} className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
-          <span className="w-7 h-7 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center justify-center">{blok}</span>
+          <span className={`w-7 h-7 rounded-lg ${tema.badge} text-white text-xs font-bold flex items-center justify-center`}>{blok}</span>
           <div>
             <p className="font-semibold text-gray-800 text-sm">{blok} Blok</p>
             <p className="text-xs text-gray-400">{daireler.length} daire • {doluSayisi} dolu • {bosSayisi} boş</p>
@@ -741,8 +790,8 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
         </button>
         {acik && (
           <div className="flex items-center gap-1 mr-2">
-            <button onClick={() => setGorunum("kart")} title="Kart" className={`p-1.5 rounded transition-colors ${gorunum === "kart" ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-200"}`}><LayoutGrid size={13} /></button>
-            <button onClick={() => setGorunum("liste")} title="Liste" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? "bg-blue-600 text-white" : "text-gray-400 hover:bg-gray-200"}`}><List size={13} /></button>
+            <button onClick={() => setGorunum("kart")} title="Kart" className={`p-1.5 rounded transition-colors ${gorunum === "kart" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><LayoutGrid size={13} /></button>
+            <button onClick={() => setGorunum("liste")} title="Liste" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><List size={13} /></button>
           </div>
         )}
         <button onClick={() => setAcik(a => !a)}>
@@ -752,13 +801,13 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
 
       {acik && (
         gorunum === "kart" ? (
-          <div className="p-3 bg-white grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+          <div className={`p-3 ${tema.containerBg} grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2`}>
             {sortedDaireler.map(k => (
               <Etap2DaireKart key={k.id} konut={k} onEdit={() => setEditKonut(k)} onSozlesme={oda => openSozlesme(k, oda)} onSahip={() => setSahKonut(k)} />
             ))}
           </div>
         ) : (
-          <div className="bg-white">
+          <div className={tema.containerBg}>
             <BlokListeTablosu daireler={sortedDaireler} onEdit={setEditKonut} onSozlesme={openSozlesme} onSahip={setSahKonut} />
           </div>
         )
@@ -850,13 +899,18 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
     return av.num !== zv.num ? av.num - zv.num : av.ltr.localeCompare(zv.ltr);
   });
 
+  const tema = getBlokTema(parentBlok);
+
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className={`${tema.containerBg} rounded-xl border ${tema.containerBorder} shadow-sm overflow-hidden`}>
       <div className="flex items-center px-5 py-3.5">
         <button onClick={() => setAcik(a => !a)} className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
-          <span className="w-8 h-8 rounded-lg bg-emerald-600 text-white text-sm font-bold flex items-center justify-center">{parentBlok}</span>
+          <span className={`w-8 h-8 rounded-lg ${tema.badge} text-white text-sm font-bold flex items-center justify-center`}>{parentBlok}</span>
           <div>
-            <p className="font-semibold text-gray-800 text-sm">{parentBlok} Blok</p>
+            <p className="font-semibold text-gray-800 text-sm flex items-center gap-2">
+              {parentBlok} Blok
+              {tema.label && <span className={`text-[10px] font-medium ${tema.btn} px-2 py-0.5 rounded-full bg-white/70`}>{tema.label}</span>}
+            </p>
             <p className="text-xs text-gray-400">
               {isAGrubu ? `${altBloklar.length} alt blok • ` : ""}
               {konutlar.length} daire • {doluSayisi} dolu • {konutlar.length - doluSayisi} boş
@@ -865,8 +919,8 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
         </button>
         {acik && !isAGrubu && (
           <div className="flex items-center gap-1 mr-2">
-            <button onClick={() => setGorunum("kart")} title="Kart Görünümü" className={`p-1.5 rounded transition-colors ${gorunum === "kart" ? "bg-emerald-600 text-white" : "text-gray-400 hover:bg-gray-100"}`}><LayoutGrid size={14} /></button>
-            <button onClick={() => setGorunum("liste")} title="Liste Görünümü" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? "bg-emerald-600 text-white" : "text-gray-400 hover:bg-gray-100"}`}><List size={14} /></button>
+            <button onClick={() => setGorunum("kart")} title="Kart Görünümü" className={`p-1.5 rounded transition-colors ${gorunum === "kart" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><LayoutGrid size={14} /></button>
+            <button onClick={() => setGorunum("liste")} title="Liste Görünümü" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><List size={14} /></button>
           </div>
         )}
         <button onClick={() => setAcik(a => !a)}>
@@ -875,7 +929,7 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
       </div>
 
       {acik && (
-        <div className="border-t border-gray-100">
+        <div className={`border-t ${tema.containerBorder}`}>
           {isAGrubu ? (
             <div className="p-3 space-y-2">
               {altBloklar.map(ab => (
