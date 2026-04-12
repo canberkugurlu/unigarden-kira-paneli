@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const maxDuration = 300; // 5 dakika
+
 const SECRET = process.env.IMPORT_SECRET ?? "etap3-import-2025";
 
 type Sahip = {
