@@ -1395,7 +1395,7 @@ export default function KonutlarPage() {
   const [aramaMetni13,  setAramaMetni13]  = useState("");
   const [durumFiltre13, setDurumFiltre13] = useState<"tumu" | "dolu" | "bos" | "bakimda">("tumu");
   const [blokFiltre13,  setBlokFiltre13]  = useState("");
-  const [gorunum13,     setGorunum13]     = useState<"kart" | "liste">("kart");
+  const [gorunum13,     setGorunum13]     = useState<"kart" | "liste">("liste");
 
   const [yeniForm, setYeniForm] = useState({
     blok: "", katNo: "1", daireNo: "", tip: "1+1",
