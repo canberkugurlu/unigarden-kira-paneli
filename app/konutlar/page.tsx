@@ -35,51 +35,66 @@ const EK_OZELLIKLER = [
 
 function getParentBlok(blok: string) { return blok.startsWith("A") ? "A" : blok; }
 
-// 2. Etap yurt konsepti: A/B/C = Kız (açık pembe), D/E = Erkek (mavi)
+// 2. Etap konseptleri: A/B/C = Kız yurdu (pembe), D/E = Erkek yurdu (mavi), F = Karma, G = Apart (gri)
 type BlokTema = {
+  kind: "kiz" | "erkek" | "apart" | "default";
   badge: string; btn: string; btnHover: string; btnActive: string;
-  containerBg: string; containerBorder: string; headerBg: string;
-  hoverRow: string; label: string;
+  containerBorder: string;
+  rowBg: string; rowHover: string;
+  oda1: string; oda2: string;
+  label: string;
 };
+const TEMA_KIZ: BlokTema = {
+  kind: "kiz",
+  badge: "bg-pink-400", btn: "text-pink-600", btnHover: "hover:bg-pink-100", btnActive: "bg-pink-500 text-white",
+  containerBorder: "border-pink-200",
+  rowBg: "bg-pink-50", rowHover: "hover:bg-pink-100/70",
+  oda1: "bg-pink-100 text-pink-700", oda2: "bg-rose-100 text-rose-700",
+  label: "Kız Yurdu",
+};
+const TEMA_ERKEK: BlokTema = {
+  kind: "erkek",
+  badge: "bg-blue-500", btn: "text-blue-600", btnHover: "hover:bg-blue-100", btnActive: "bg-blue-600 text-white",
+  containerBorder: "border-blue-200",
+  rowBg: "bg-blue-50", rowHover: "hover:bg-blue-100/70",
+  oda1: "bg-blue-100 text-blue-700", oda2: "bg-sky-100 text-sky-700",
+  label: "Erkek Yurdu",
+};
+const TEMA_APART: BlokTema = {
+  kind: "apart",
+  badge: "bg-gray-400", btn: "text-gray-600", btnHover: "hover:bg-gray-100", btnActive: "bg-gray-500 text-white",
+  containerBorder: "border-gray-200",
+  rowBg: "bg-gray-50", rowHover: "hover:bg-gray-100/70",
+  oda1: "bg-gray-100 text-gray-700", oda2: "bg-slate-100 text-slate-700",
+  label: "Apart",
+};
+const TEMA_DEFAULT: BlokTema = {
+  kind: "default",
+  badge: "bg-emerald-600", btn: "text-emerald-600", btnHover: "hover:bg-emerald-50", btnActive: "bg-emerald-600 text-white",
+  containerBorder: "border-gray-100",
+  rowBg: "bg-white", rowHover: "hover:bg-gray-50",
+  oda1: "bg-indigo-50 text-indigo-700", oda2: "bg-purple-50 text-purple-700",
+  label: "",
+};
+
 function getBlokTema(blok: string): BlokTema {
   const ust = (blok || "").charAt(0).toUpperCase();
-  if (["A", "B", "C"].includes(ust)) {
-    return {
-      badge:          "bg-pink-400",
-      btn:            "text-pink-600",
-      btnHover:       "hover:bg-pink-100",
-      btnActive:      "bg-pink-500 text-white",
-      containerBg:    "bg-pink-50/40",
-      containerBorder:"border-pink-200",
-      headerBg:       "bg-pink-50",
-      hoverRow:       "hover:bg-pink-50/60",
-      label:          "Kız Yurdu",
-    };
-  }
-  if (["D", "E"].includes(ust)) {
-    return {
-      badge:          "bg-blue-500",
-      btn:            "text-blue-600",
-      btnHover:       "hover:bg-blue-100",
-      btnActive:      "bg-blue-600 text-white",
-      containerBg:    "bg-blue-50/40",
-      containerBorder:"border-blue-200",
-      headerBg:       "bg-blue-50",
-      hoverRow:       "hover:bg-blue-50/60",
-      label:          "Erkek Yurdu",
-    };
-  }
-  return {
-    badge:          "bg-emerald-600",
-    btn:            "text-emerald-600",
-    btnHover:       "hover:bg-emerald-50",
-    btnActive:      "bg-emerald-600 text-white",
-    containerBg:    "bg-white",
-    containerBorder:"border-gray-100",
-    headerBg:       "bg-gray-50",
-    hoverRow:       "hover:bg-gray-50",
-    label:          "",
-  };
+  if (["A", "B", "C"].includes(ust)) return TEMA_KIZ;
+  if (["D", "E"].includes(ust))       return TEMA_ERKEK;
+  if (ust === "G")                    return TEMA_APART;
+  if (ust === "F")                    return TEMA_APART; // F karma — üst blokta gri göster, daire özelinde override edilir
+  return TEMA_DEFAULT;
+}
+
+// Daire özelinde (F karma blok için) ozellikler içindeki tagʼa göre tema seç
+function getDaireTema(konut: Konut): BlokTema {
+  const blokTema = getBlokTema(konut.blok);
+  if (konut.blok !== "F") return blokTema;
+  const ozet = (konut.ozellikler ?? "").toLowerCase();
+  if (ozet.includes("kız") || ozet.includes("kiz"))       return TEMA_KIZ;
+  if (ozet.includes("erkek"))                             return TEMA_ERKEK;
+  if (ozet.includes("apart"))                             return TEMA_APART;
+  return TEMA_APART;
 }
 
 function sortDaireler(konutlar: Konut[]) {
@@ -668,25 +683,14 @@ function Etap2DaireKart({ konut, onEdit, onSozlesme, onSahip }: {
 }
 
 // ─── Etap 2: Blok içi liste tablosu ──────────────────────────────────────────
-function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema }: {
+function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema: _parentTema }: {
   daireler: Konut[];
   onEdit: (k: Konut) => void;
   onSozlesme: (k: Konut, oda: string) => void;
   onSahip: (k: Konut) => void;
   tema?: BlokTema;
 }) {
-  // Varsayılan (tema yoksa) mevcut gri görünüm korunur
-  const headerCls = tema ? tema.headerBg : "bg-gray-50";
-  const hoverCls  = tema ? tema.hoverRow : "hover:bg-gray-50/50";
-  const oda1Cls   = tema?.label === "Kız Yurdu"   ? "bg-pink-100 text-pink-700"
-                  : tema?.label === "Erkek Yurdu" ? "bg-blue-100 text-blue-700"
-                  : "bg-indigo-50 text-indigo-700";
-  const oda2Cls   = tema?.label === "Kız Yurdu"   ? "bg-rose-100 text-rose-700"
-                  : tema?.label === "Erkek Yurdu" ? "bg-sky-100 text-sky-700"
-                  : "bg-purple-50 text-purple-700";
-  const rowDivide = tema?.label === "Kız Yurdu"   ? "border-pink-200"
-                  : tema?.label === "Erkek Yurdu" ? "border-blue-200"
-                  : "border-gray-200";
+  const router = useRouter();
   const fmt = (n: number) => n > 0 ? new Intl.NumberFormat("tr-TR").format(n) + " ₺" : "—";
   const sorted = [...daireler].sort((a, z) => {
     const parse = (d: string) => { const p = d.split("-").pop() ?? d; return { num: parseInt(p, 10) || 0, ltr: p.replace(/\d+/, "") }; };
@@ -697,7 +701,7 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema }: {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
-        <thead className={`${headerCls} text-xs text-gray-500 uppercase tracking-wide`}>
+        <thead className="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
             <th className="px-3 py-2 text-left">Daire</th>
             <th className="px-3 py-2 text-left">Oda</th>
@@ -714,14 +718,25 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema }: {
             const oda2 = k.sozlesmeler?.find(s => s.oda === "Oda 2");
             const toplamKira = (oda1?.aylikKira ?? 0) + (oda2?.aylikKira ?? 0);
             const odaRows = [{ label: "Oda 1", soz: oda1 }, { label: "Oda 2", soz: oda2 }] as const;
+            // Her daire kendi teması: A/B/C pembe, D/E mavi, G gri, F özelinde override
+            const daireTema = getDaireTema(k);
+            const rowBgCls  = daireTema.rowBg;
+            const rowHover  = daireTema.rowHover;
+            const divider   = daireTema.containerBorder;
+            const oda1Cls   = daireTema.oda1;
+            const oda2Cls   = daireTema.oda2;
+            const stop = (e: React.MouseEvent) => e.stopPropagation();
+            const goDaire = () => router.push(`/konutlar/${k.id}`);
             return (
               <Fragment key={k.id}>
                 {odaRows.map(({ label, soz }, idx) => (
-                  <tr key={label} className={`${hoverCls} ${idx === 0 ? `border-t-2 ${rowDivide}` : "border-t border-dashed border-gray-100"}`}>
+                  <tr key={label}
+                      onClick={goDaire}
+                      className={`${rowBgCls} ${rowHover} cursor-pointer transition-colors ${idx === 0 ? `border-t-2 ${divider}` : "border-t border-dashed border-gray-100"}`}>
                     {idx === 0 && (
                       <td rowSpan={2} className="px-3 py-2 align-middle">
                         <div className="font-bold text-gray-800">{dairePart}</div>
-                        {toplamKira > 0 && <div className="text-xs text-gray-400">Toplam: {fmt(toplamKira)}</div>}
+                        {toplamKira > 0 && <div className="text-xs text-gray-500">Toplam: {fmt(toplamKira)}</div>}
                       </td>
                     )}
                     <td className="px-3 py-2">
@@ -729,27 +744,29 @@ function BlokListeTablosu({ daireler, onEdit, onSozlesme, onSahip, tema }: {
                     </td>
                     <td className="px-3 py-2">
                       {soz?.ogrenci ? (
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 truncate max-w-[160px]">{soz.ogrenci.ad} {soz.ogrenci.soyad}</p>
-                          {soz.ogrenci.telefon && soz.ogrenci.telefon !== "-" && <p className="text-xs text-gray-400">{soz.ogrenci.telefon}</p>}
-                        </div>
-                      ) : <span className="text-xs text-gray-300 italic">Boş</span>}
+                        <button
+                          onClick={(e) => { stop(e); router.push(`/ogrenciler/${soz.ogrenci!.id}`); }}
+                          className="text-left group">
+                          <p className="text-sm font-medium text-gray-800 truncate max-w-[180px] group-hover:underline group-hover:text-gray-900">{soz.ogrenci.ad} {soz.ogrenci.soyad}</p>
+                          {soz.ogrenci.telefon && soz.ogrenci.telefon !== "-" && <p className="text-xs text-gray-500">{soz.ogrenci.telefon}</p>}
+                        </button>
+                      ) : <span className="text-xs text-gray-400 italic">Boş</span>}
                     </td>
                     <td className="px-3 py-2 text-sm">
                       {soz ? <span className="font-medium text-gray-800">{fmt(soz.aylikKira)}</span>
-                           : k.kiraBedeli > 0 ? <span className="text-gray-400 text-xs">{fmt(k.kiraBedeli)} <span className="text-gray-300">(liste)</span></span>
-                           : <span className="text-gray-300 text-xs">—</span>}
+                           : k.kiraBedeli > 0 ? <span className="text-gray-500 text-xs">{fmt(k.kiraBedeli)} <span className="text-gray-400">(liste)</span></span>
+                           : <span className="text-gray-400 text-xs">—</span>}
                     </td>
                     <td className="px-3 py-2">
                       {soz ? <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Dolu</span>
                            : <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">Boş</span>}
                     </td>
-                    <td className="px-3 py-2 text-right">
+                    <td className="px-3 py-2 text-right" onClick={stop}>
                       <div className="flex items-center justify-end gap-1">
-                        {!soz && <button onClick={() => onSozlesme(k, label)} title="Sözleşme Ekle" className="p-1 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-600"><FileText size={12} /></button>}
+                        {!soz && <button onClick={(e) => { stop(e); onSozlesme(k, label); }} title="Sözleşme Ekle" className="p-1 rounded hover:bg-blue-50 text-gray-500 hover:text-blue-600"><FileText size={12} /></button>}
                         {idx === 1 && <>
-                          <button onClick={() => onEdit(k)} title="Düzenle" className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><Pencil size={12} /></button>
-                          <button onClick={() => onSahip(k)} title="Sahip Ata" className="p-1 rounded hover:bg-emerald-50 text-gray-400 hover:text-emerald-600"><UserCheck size={12} /></button>
+                          <button onClick={(e) => { stop(e); onEdit(k); }} title="Düzenle" className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700"><Pencil size={12} /></button>
+                          <button onClick={(e) => { stop(e); onSahip(k); }} title="Sahip Ata" className="p-1 rounded hover:bg-emerald-50 text-gray-500 hover:text-emerald-600"><UserCheck size={12} /></button>
                         </>}
                       </div>
                     </td>
@@ -792,8 +809,8 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
   const tema = getBlokTema(blok);
 
   return (
-    <div className={`border ${tema.containerBorder} rounded-xl overflow-hidden`}>
-      <div className={`flex items-center px-4 py-3 ${tema.headerBg}`}>
+    <div className={`border ${tema.containerBorder} rounded-xl overflow-hidden bg-white`}>
+      <div className="flex items-center px-4 py-3 bg-gray-50">
         <button onClick={() => setAcik(a => !a)} className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
           <span className={`w-7 h-7 rounded-lg ${tema.badge} text-white text-xs font-bold flex items-center justify-center`}>{blok}</span>
           <div>
@@ -814,13 +831,13 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
 
       {acik && (
         gorunum === "kart" ? (
-          <div className={`p-3 ${tema.containerBg} grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2`}>
+          <div className="p-3 bg-white grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
             {sortedDaireler.map(k => (
               <Etap2DaireKart key={k.id} konut={k} onEdit={() => setEditKonut(k)} onSozlesme={oda => openSozlesme(k, oda)} onSahip={() => setSahKonut(k)} />
             ))}
           </div>
         ) : (
-          <div className={tema.containerBg}>
+          <div className="bg-white">
             <BlokListeTablosu daireler={sortedDaireler} onEdit={setEditKonut} onSozlesme={openSozlesme} onSahip={setSahKonut} tema={tema} />
           </div>
         )
@@ -915,7 +932,7 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
   const tema = getBlokTema(parentBlok);
 
   return (
-    <div className={`${tema.containerBg} rounded-xl border ${tema.containerBorder} shadow-sm overflow-hidden`}>
+    <div className={`bg-white rounded-xl border ${tema.containerBorder} shadow-sm overflow-hidden`}>
       <div className="flex items-center px-5 py-3.5">
         <button onClick={() => setAcik(a => !a)} className="flex items-center gap-3 flex-1 text-left hover:opacity-80 transition-opacity">
           <span className={`w-8 h-8 rounded-lg ${tema.badge} text-white text-sm font-bold flex items-center justify-center`}>{parentBlok}</span>

@@ -71,16 +71,22 @@ function parseOzellikler(raw?: string): string[] {
   try { return JSON.parse(raw); } catch { return raw.split(",").map(s => s.trim()).filter(Boolean); }
 }
 
-// 2. Etap yurt konsepti teması: A/B/C = Kız (açık pembe), D/E = Erkek (mavi)
+// 2. Etap konseptleri: A/B/C = Kız, D/E = Erkek, F/G = Apart (gri). F karma — ozellikler tagʼına göre override edilebilir.
 type DaireTema = { iconBg: string; bar: string; accent: string; bannerBg: string; bannerBorder: string; label: string };
-function getDaireTema(blok: string, etap: number): DaireTema | null {
+function getDaireTema(blok: string, etap: number, ozellikler?: string): DaireTema | null {
   if (etap !== 2) return null;
   const u = (blok || "").charAt(0).toUpperCase();
-  if (["A", "B", "C"].includes(u)) {
-    return { iconBg: "bg-pink-400", bar: "bg-pink-400", accent: "text-pink-600", bannerBg: "bg-pink-50", bannerBorder: "border-pink-200", label: "Kız Yurdu" };
-  }
-  if (["D", "E"].includes(u)) {
-    return { iconBg: "bg-blue-500", bar: "bg-blue-500", accent: "text-blue-600", bannerBg: "bg-blue-50", bannerBorder: "border-blue-200", label: "Erkek Yurdu" };
+  const kiz   = { iconBg: "bg-pink-400",  bar: "bg-pink-400",  accent: "text-pink-600",  bannerBg: "bg-pink-50",  bannerBorder: "border-pink-200",  label: "Kız Yurdu"   };
+  const erkek = { iconBg: "bg-blue-500",  bar: "bg-blue-500",  accent: "text-blue-600",  bannerBg: "bg-blue-50",  bannerBorder: "border-blue-200",  label: "Erkek Yurdu" };
+  const apart = { iconBg: "bg-gray-400",  bar: "bg-gray-400",  accent: "text-gray-600",  bannerBg: "bg-gray-50",  bannerBorder: "border-gray-200",  label: "Apart"       };
+  if (["A", "B", "C"].includes(u)) return kiz;
+  if (["D", "E"].includes(u))      return erkek;
+  if (u === "G")                   return apart;
+  if (u === "F") {
+    const o = (ozellikler ?? "").toLowerCase();
+    if (o.includes("kız") || o.includes("kiz")) return kiz;
+    if (o.includes("erkek"))                    return erkek;
+    return apart;
   }
   return null;
 }
@@ -221,7 +227,7 @@ export default function DaireKartPage() {
     </div>
   );
 
-  const daireTema   = getDaireTema(konut.blok, konut.etap);
+  const daireTema   = getDaireTema(konut.blok, konut.etap, konut.ozellikler);
   const aktifSoz    = konut.sozlesmeler.find(s => s.durum === "Aktif");
   const gecmisSoz   = konut.sozlesmeler.filter(s => s.durum !== "Aktif");
   const toplamKiraci = new Set(konut.sozlesmeler.map(s => s.ogrenci?.id).filter(Boolean)).size;
