@@ -17,6 +17,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const sahibi = await prisma.daireSahibi.create({ data: body });
+  const data: Record<string, unknown> = {
+    tip:      body.tip ?? "Bireysel",
+    ad:       body.ad,
+    soyad:    body.soyad,
+    telefon:  body.telefon,
+    email:    body.email ?? null,
+    notlar:   body.notlar ?? null,
+    tcKimlik: body.tcKimlik || null,
+    vergiNo:  body.vergiNo  || null,
+    unvan:    body.unvan    || null,
+  };
+  const sahibi = await prisma.daireSahibi.create({ data });
   return NextResponse.json(sahibi, { status: 201 });
 }

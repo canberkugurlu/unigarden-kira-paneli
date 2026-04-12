@@ -14,7 +14,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await req.json();
-  const sahibi = await prisma.daireSahibi.update({ where: { id }, data: body });
+  const data: Record<string, unknown> = {};
+  ["tip","ad","soyad","telefon","email","notlar","tcKimlik","vergiNo","unvan"].forEach(k => {
+    if (body[k] !== undefined) data[k] = body[k] === "" ? null : body[k];
+  });
+  const sahibi = await prisma.daireSahibi.update({ where: { id }, data });
   return NextResponse.json(sahibi);
 }
 

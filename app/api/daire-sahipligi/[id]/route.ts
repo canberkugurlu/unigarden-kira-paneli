@@ -10,6 +10,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (body.satisTarihi !== undefined) data.satisTarihi = body.satisTarihi ? new Date(body.satisTarihi) : null;
     if (body.alisFiyati  !== undefined) data.alisFiyati  = body.alisFiyati  != null ? Number(body.alisFiyati)  : null;
     if (body.satisFiyati !== undefined) data.satisFiyati = body.satisFiyati != null ? Number(body.satisFiyati) : null;
+    if (body.ipotekli    !== undefined) data.ipotekli    = Boolean(body.ipotekli);
+    if (body.pay         !== undefined) data.pay         = body.pay   != null ? Number(body.pay)   : null;
+    if (body.payda       !== undefined) data.payda       = body.payda != null ? Number(body.payda) : null;
     if (body.notlar      !== undefined) data.notlar      = body.notlar ?? null;
 
     const kayit = await prisma.daireSahipligi.update({

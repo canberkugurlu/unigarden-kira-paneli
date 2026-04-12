@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { konutId, daireSahibiId, alisTarihi, satisTarihi, alisFiyati, satisFiyati, notlar } = body ?? {};
+    const { konutId, daireSahibiId, alisTarihi, satisTarihi, alisFiyati, satisFiyati, ipotekli, pay, payda, notlar } = body ?? {};
     if (!konutId || !daireSahibiId || !alisTarihi) {
       return NextResponse.json({ error: "konutId, daireSahibiId ve alisTarihi zorunludur" }, { status: 400 });
     }
@@ -39,6 +39,9 @@ export async function POST(req: NextRequest) {
         satisTarihi: satisTarihi ? new Date(satisTarihi) : null,
         alisFiyati:  alisFiyati  != null ? Number(alisFiyati)  : null,
         satisFiyati: satisFiyati != null ? Number(satisFiyati) : null,
+        ipotekli: Boolean(ipotekli),
+        pay:   pay   != null ? Number(pay)   : null,
+        payda: payda != null ? Number(payda) : null,
         notlar: notlar ?? null,
       },
       include: {

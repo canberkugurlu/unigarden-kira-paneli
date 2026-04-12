@@ -10,11 +10,14 @@ model DaireSahibi {
   id             String             @id @default(cuid())
   ad             String
   soyad          String
-  tcKimlik       String             @unique
+  tcKimlik       String?            @unique
   telefon        String
   email          String?
   notlar         String?
   sifre          String?
+  tip            String             @default("Bireysel") // "Bireysel" | "Kurumsal"
+  vergiNo        String?            @unique
+  unvan          String?            // Kurumsal için firma unvanı
   olusturmaTar   DateTime           @default(now())
   konutlar       Konut[]
   sahiplikler    DaireSahipligi[]
@@ -32,6 +35,9 @@ model DaireSahipligi {
   satisTarihi   DateTime?
   alisFiyati    Float?
   satisFiyati   Float?
+  ipotekli      Boolean      @default(false)
+  pay           Int?         // Pay payı (örn 1/2 için pay=1)
+  payda         Int?         // Pay paydası (örn 1/2 için payda=2)
   notlar        String?
   olusturmaTar  DateTime     @default(now())
 

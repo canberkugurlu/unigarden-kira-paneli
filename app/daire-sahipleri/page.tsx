@@ -13,20 +13,30 @@ interface SahiplikKaydi {
   satisTarihi?: string | null;
   alisFiyati?: number | null;
   satisFiyati?: number | null;
+  ipotekli?: boolean;
+  pay?: number | null;
+  payda?: number | null;
   notlar?: string | null;
   konut: { id: string; daireNo: string; blok: string; etap: number };
 }
 interface DaireSahibi {
-  id: string; ad: string; soyad: string; tcKimlik: string; telefon: string; email?: string; notlar?: string;
+  id: string; ad: string; soyad: string; tcKimlik?: string | null; telefon: string; email?: string; notlar?: string;
+  tip?: "Bireysel" | "Kurumsal";
+  vergiNo?: string | null; unvan?: string | null;
   konutlar: Konut[];
   sahiplikler?: SahiplikKaydi[];
 }
-type FormState = { ad: string; soyad: string; tcKimlik: string; telefon: string; email: string; notlar: string };
-const EMPTY: FormState = { ad: "", soyad: "", tcKimlik: "", telefon: "", email: "", notlar: "" };
+type FormState = {
+  tip: "Bireysel" | "Kurumsal";
+  ad: string; soyad: string; tcKimlik: string;
+  vergiNo: string; unvan: string;
+  telefon: string; email: string; notlar: string;
+};
+const EMPTY: FormState = { tip: "Bireysel", ad: "", soyad: "", tcKimlik: "", vergiNo: "", unvan: "", telefon: "", email: "", notlar: "" };
 
 // ── Sahiplik (Alış/Satış) Modal ────────────────────────────────────────────
-type SahFormState = { konutId: string; alisTarihi: string; satisTarihi: string; alisFiyati: string; satisFiyati: string; notlar: string };
-const EMPTY_SAH: SahFormState = { konutId: "", alisTarihi: "", satisTarihi: "", alisFiyati: "", satisFiyati: "", notlar: "" };
+type SahFormState = { konutId: string; alisTarihi: string; satisTarihi: string; alisFiyati: string; satisFiyati: string; ipotekli: boolean; pay: string; payda: string; notlar: string };
+const EMPTY_SAH: SahFormState = { konutId: "", alisTarihi: "", satisTarihi: "", alisFiyati: "", satisFiyati: "", ipotekli: false, pay: "", payda: "", notlar: "" };
 
 function SahiplikModal({ sahibiId, edit, onClose, onSaved }: {
   sahibiId: string;
@@ -41,6 +51,9 @@ function SahiplikModal({ sahibiId, edit, onClose, onSaved }: {
         satisTarihi: edit.satisTarihi ? edit.satisTarihi.slice(0, 10) : "",
         alisFiyati:  edit.alisFiyati  != null ? String(edit.alisFiyati)  : "",
         satisFiyati: edit.satisFiyati != null ? String(edit.satisFiyati) : "",
+        ipotekli:    edit.ipotekli ?? false,
+        pay:         edit.pay   != null ? String(edit.pay)   : "",
+        payda:       edit.payda != null ? String(edit.payda) : "",
         notlar: edit.notlar ?? "",
       }
     : EMPTY_SAH
@@ -65,23 +78,17 @@ function SahiplikModal({ sahibiId, edit, onClose, onSaved }: {
     setSaving(true);
     const url    = edit ? `/api/daire-sahipligi/${edit.id}` : `/api/daire-sahipligi`;
     const method = edit ? "PATCH" : "POST";
-    const body   = edit
-      ? {
-          alisTarihi:  form.alisTarihi,
-          satisTarihi: form.satisTarihi || null,
-          alisFiyati:  form.alisFiyati  === "" ? null : Number(form.alisFiyati),
-          satisFiyati: form.satisFiyati === "" ? null : Number(form.satisFiyati),
-          notlar: form.notlar || null,
-        }
-      : {
-          konutId: form.konutId,
-          daireSahibiId: sahibiId,
-          alisTarihi:  form.alisTarihi,
-          satisTarihi: form.satisTarihi || null,
-          alisFiyati:  form.alisFiyati  === "" ? null : Number(form.alisFiyati),
-          satisFiyati: form.satisFiyati === "" ? null : Number(form.satisFiyati),
-          notlar: form.notlar || null,
-        };
+    const common = {
+      alisTarihi:  form.alisTarihi,
+      satisTarihi: form.satisTarihi || null,
+      alisFiyati:  form.alisFiyati  === "" ? null : Number(form.alisFiyati),
+      satisFiyati: form.satisFiyati === "" ? null : Number(form.satisFiyati),
+      ipotekli:    form.ipotekli,
+      pay:   form.pay   === "" ? null : Number(form.pay),
+      payda: form.payda === "" ? null : Number(form.payda),
+      notlar: form.notlar || null,
+    };
+    const body   = edit ? common : { ...common, konutId: form.konutId, daireSahibiId: sahibiId };
     const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     setSaving(false);
     if (res.ok) { onSaved(); onClose(); }
@@ -139,6 +146,20 @@ function SahiplikModal({ sahibiId, edit, onClose, onSaved }: {
               <input type="number" value={form.satisFiyati} onChange={set("satisFiyati")} placeholder="0" className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
             </div>
           </div>
+          <div className="grid grid-cols-3 gap-3 items-end">
+            <div>
+              <label className="text-xs text-gray-500">Pay</label>
+              <input type="number" value={form.pay} onChange={set("pay")} placeholder="1" className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
+            </div>
+            <div>
+              <label className="text-xs text-gray-500">Payda</label>
+              <input type="number" value={form.payda} onChange={set("payda")} placeholder="1" className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
+            </div>
+            <label className="flex items-center gap-2 text-sm pb-2">
+              <input type="checkbox" checked={form.ipotekli} onChange={(e) => setForm(p => ({ ...p, ipotekli: e.target.checked }))} />
+              İpotekli
+            </label>
+          </div>
           <div>
             <label className="text-xs text-gray-500">Notlar (opsiyonel)</label>
             <textarea value={form.notlar} onChange={set("notlar")} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" />
@@ -189,6 +210,8 @@ function SahiplikGecmisi({ sahibi, onChanged }: { sahibi: DaireSahibi; onChanged
                   {k.satisTarihi
                     ? <span className="px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600">Satıldı</span>
                     : <span className="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Aktif</span>}
+                  {k.ipotekli && <span className="px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700">İpotekli</span>}
+                  {k.pay && k.payda && k.payda > 1 && <span className="px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-700">{k.pay}/{k.payda} Hisse</span>}
                 </div>
                 <div className="text-gray-500 mt-0.5 flex items-center gap-3 flex-wrap">
                   <span className="flex items-center gap-1"><Calendar size={10} /> {fmt(k.alisTarihi)} → {fmt(k.satisTarihi)}</span>
@@ -272,35 +295,80 @@ const durumRenk: Record<string, string> = {
 };
 
 function SahibiModal({ initial, onClose, onSaved }: { initial?: DaireSahibi; onClose: () => void; onSaved: () => void }) {
-  const [form, setForm] = useState<FormState>(initial ? { ad: initial.ad, soyad: initial.soyad, tcKimlik: initial.tcKimlik, telefon: initial.telefon, email: initial.email ?? "", notlar: initial.notlar ?? "" } : EMPTY);
+  const [form, setForm] = useState<FormState>(initial ? {
+    tip: (initial.tip ?? "Bireysel") as "Bireysel" | "Kurumsal",
+    ad: initial.ad, soyad: initial.soyad,
+    tcKimlik: initial.tcKimlik ?? "",
+    vergiNo: initial.vergiNo ?? "", unvan: initial.unvan ?? "",
+    telefon: initial.telefon, email: initial.email ?? "", notlar: initial.notlar ?? ""
+  } : EMPTY);
   const [hata, setHata] = useState("");
   const [saving, setSaving] = useState(false);
   const f = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm(p => ({ ...p, [k]: e.target.value }));
 
   const save = async () => {
-    if (!form.ad || !form.soyad || form.tcKimlik.length !== 11 || !form.telefon) {
-      setHata("Ad, soyad, 11 haneli TC ve telefon zorunludur."); return;
+    if (form.tip === "Bireysel") {
+      if (!form.ad || !form.soyad || !form.telefon) {
+        setHata("Ad, soyad ve telefon zorunludur."); return;
+      }
+      if (form.tcKimlik && form.tcKimlik.length !== 11) {
+        setHata("TC Kimlik 11 haneli olmalı."); return;
+      }
+    } else {
+      if (!form.unvan) { setHata("Unvan zorunludur."); return; }
     }
     setSaving(true); setHata("");
     const url = initial ? `/api/daire-sahipleri/${initial.id}` : "/api/daire-sahipleri";
-    const res = await fetch(url, { method: initial ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    // API payload
+    const payload: Record<string, unknown> = {
+      tip: form.tip,
+      ad: form.tip === "Kurumsal" ? (form.unvan || "Kurum") : form.ad,
+      soyad: form.tip === "Kurumsal" ? "-" : form.soyad,
+      telefon: form.telefon,
+      email: form.email || null,
+      notlar: form.notlar || null,
+      tcKimlik: form.tip === "Bireysel" && form.tcKimlik ? form.tcKimlik : null,
+      vergiNo:  form.tip === "Kurumsal" && form.vergiNo ? form.vergiNo : null,
+      unvan:    form.tip === "Kurumsal" ? (form.unvan || null) : null,
+    };
+    const res = await fetch(url, { method: initial ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     setSaving(false);
     if (res.ok) { onSaved(); onClose(); } else { const j = await res.json(); setHata(j.error ?? "Hata oluştu"); }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">{initial ? "Daire Sahibi Düzenle" : "Yeni Daire Sahibi"}</h3>
           <button onClick={onClose}><X size={18} className="text-gray-400" /></button>
         </div>
+        {/* Tip seçici */}
+        <div className="flex gap-2 mb-4 bg-gray-50 rounded-lg p-1">
+          <button onClick={() => setForm(p => ({ ...p, tip: "Bireysel" }))}
+            className={`flex-1 py-2 text-xs rounded font-medium transition-colors ${form.tip === "Bireysel" ? "bg-white shadow text-emerald-700" : "text-gray-500"}`}>
+            👤 Bireysel
+          </button>
+          <button onClick={() => setForm(p => ({ ...p, tip: "Kurumsal" }))}
+            className={`flex-1 py-2 text-xs rounded font-medium transition-colors ${form.tip === "Kurumsal" ? "bg-white shadow text-blue-700" : "text-gray-500"}`}>
+            🏢 Kurumsal
+          </button>
+        </div>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="text-xs text-gray-500">Ad</label><input value={form.ad} onChange={f("ad")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-xs text-gray-500">Soyad</label><input value={form.soyad} onChange={f("soyad")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
-          </div>
-          <div><label className="text-xs text-gray-500">TC Kimlik No</label><input value={form.tcKimlik} onChange={f("tcKimlik")} maxLength={11} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+          {form.tip === "Bireysel" ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className="text-xs text-gray-500">Ad</label><input value={form.ad} onChange={f("ad")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+                <div><label className="text-xs text-gray-500">Soyad</label><input value={form.soyad} onChange={f("soyad")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              </div>
+              <div><label className="text-xs text-gray-500">TC Kimlik No (opsiyonel)</label><input value={form.tcKimlik} onChange={f("tcKimlik")} maxLength={11} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" placeholder="Yabancı uyruklu ise boş bırakın" /></div>
+            </>
+          ) : (
+            <>
+              <div><label className="text-xs text-gray-500">Firma Unvanı</label><input value={form.unvan} onChange={f("unvan")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-xs text-gray-500">Vergi No</label><input value={form.vergiNo} onChange={f("vergiNo")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+            </>
+          )}
           <div><label className="text-xs text-gray-500">Telefon</label><input value={form.telefon} onChange={f("telefon")} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" placeholder="05xx xxx xx xx" /></div>
           <div><label className="text-xs text-gray-500">E-posta (opsiyonel)</label><input value={form.email} onChange={f("email")} type="email" className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-xs text-gray-500">Notlar (opsiyonel)</label><textarea value={form.notlar} onChange={f("notlar")} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm mt-1" /></div>
@@ -372,15 +440,26 @@ export default function DaireSahipleriPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {gosterilen.map(s => (
-          <div key={s.id} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div key={s.id} className={`bg-white rounded-xl p-5 shadow-sm border ${s.tip === "Kurumsal" ? "border-blue-200" : "border-gray-100"}`}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
-                  <User size={20} className="text-emerald-600" />
+                <div className={`w-10 h-10 ${s.tip === "Kurumsal" ? "bg-blue-100" : "bg-emerald-100"} rounded-full flex items-center justify-center`}>
+                  {s.tip === "Kurumsal"
+                    ? <Building2 size={20} className="text-blue-600" />
+                    : <User size={20} className="text-emerald-600" />}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-800">{s.ad} {s.soyad}</h3>
-                  <p className="text-xs text-gray-400">TC: {s.tcKimlik}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-semibold text-gray-800">
+                      {s.tip === "Kurumsal" ? (s.unvan ?? s.ad) : `${s.ad} ${s.soyad}`}
+                    </h3>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${s.tip === "Kurumsal" ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"}`}>
+                      {s.tip === "Kurumsal" ? "Kurumsal" : "Bireysel"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    {s.tip === "Kurumsal" && s.vergiNo ? `VNO: ${s.vergiNo}` : s.tcKimlik ? `TC: ${s.tcKimlik}` : "Kimlik bilgisi yok"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
