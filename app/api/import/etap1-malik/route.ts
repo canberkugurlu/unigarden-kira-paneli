@@ -1036,9 +1036,9 @@ export async function POST(req: NextRequest) {
   const sahipIdMap = new Map<string, string>();
   for (const s of SAHIPLER) {
     try {
-      let sahibi;
+      let sahibiId: string | undefined;
       if (s.tip === "Kurumsal" && s.vergiNo) {
-        sahibi = await prisma.daireSahibi.upsert({
+        const row = await prisma.daireSahibi.upsert({
           where: { vergiNo: s.vergiNo },
           create: {
             tip: "Kurumsal", vergiNo: s.vergiNo, unvan: s.unvan ?? null,
@@ -1047,8 +1047,9 @@ export async function POST(req: NextRequest) {
           },
           update: { tip: "Kurumsal", unvan: s.unvan ?? null },
         });
+        sahibiId = row.id;
       } else if (s.tcKimlik) {
-        sahibi = await prisma.daireSahibi.upsert({
+        const row = await prisma.daireSahibi.upsert({
           where: { tcKimlik: s.tcKimlik },
           create: {
             tip: "Bireysel", tcKimlik: s.tcKimlik,
@@ -1057,15 +1058,22 @@ export async function POST(req: NextRequest) {
           },
           update: { tip: "Bireysel", ad: s.ad, soyad: s.soyad },
         });
+        sahibiId = row.id;
       } else {
-        // TC yok & şirket değil → isim bazlı findFirst
-        sahibi = await prisma.daireSahibi.findFirst({
+        // TC yok & şirket değil → isim bazlı ara ya da oluştur
+        const found = await prisma.daireSahibi.findFirst({
           where: { ad: s.ad, soyad: s.soyad, tcKimlik: null, vergiNo: null },
-        }) ?? await prisma.daireSahibi.create({
-          data: { tip: "Bireysel", ad: s.ad, soyad: s.soyad, telefon: s.telefon, email: s.email },
         });
+        if (found) {
+          sahibiId = found.id;
+        } else {
+          const row = await prisma.daireSahibi.create({
+            data: { tip: "Bireysel", ad: s.ad, soyad: s.soyad, telefon: s.telefon, email: s.email },
+          });
+          sahibiId = row.id;
+        }
       }
-      sahipIdMap.set(s.key, sahibi.id);
+      if (sahibiId) sahipIdMap.set(s.key, sahibiId);
       results.sahip++;
     } catch (e) {
       results.hatalar.push(`Sahip hatası ${s.key}: ${e instanceof Error ? e.message : String(e)}`);
