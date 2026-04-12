@@ -5,7 +5,13 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const { id } = await params;
   const sahibi = await prisma.daireSahibi.findUnique({
     where: { id },
-    include: { konutlar: { orderBy: { daireNo: "asc" } } },
+    include: {
+      konutlar: { orderBy: { daireNo: "asc" } },
+      sahiplikler: {
+        include: { konut: { select: { id: true, daireNo: true, blok: true, etap: true, katNo: true, tip: true } } },
+        orderBy: [{ alisTarihi: "desc" }],
+      },
+    },
   });
   if (!sahibi) return NextResponse.json({ error: "Bulunamadı" }, { status: 404 });
   return NextResponse.json(sahibi);

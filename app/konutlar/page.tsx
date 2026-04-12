@@ -528,9 +528,9 @@ function BlokGrubu({ blok, daireler, onRefresh }: {
                     <td className="px-4 py-2.5 text-gray-500">{k.tip}</td>
                     <td className="px-4 py-2.5 text-gray-500">{k.metrekare}</td>
                     <td className="px-4 py-2.5 text-gray-700">{fmt(aktifSoz?.aylikKira ?? k.kiraBedeli)}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-2.5" onClick={(e) => { if (kiraci) { e.stopPropagation(); router.push(`/ogrenciler/${kiraci.id}`); } }}>
                       {kiraci ? (
-                        <div>
+                        <div className="hover:underline">
                           <p className="text-sm font-medium text-gray-800">{kiraci.ad} {kiraci.soyad}</p>
                           {kiraci.telefon && kiraci.telefon !== "-" && (
                             <p className="text-xs text-gray-400">{kiraci.telefon}</p>
@@ -545,8 +545,8 @@ function BlokGrubu({ blok, daireler, onRefresh }: {
                         {DURUM_LABEL[k.durum] ?? k.durum}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-gray-500">
-                      {k.daireSahibi ? `${k.daireSahibi.ad} ${k.daireSahibi.soyad}` : <span className="text-gray-300">—</span>}
+                    <td className="px-4 py-2.5 text-xs text-gray-500" onClick={(e) => { if (k.daireSahibi) { e.stopPropagation(); router.push(`/daire-sahipleri/${k.daireSahibi.id}`); } }}>
+                      {k.daireSahibi ? <span className="hover:underline">{k.daireSahibi.ad} {k.daireSahibi.soyad}</span> : <span className="text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex flex-wrap gap-1">
@@ -993,6 +993,7 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
 
 // ─── Etap 2: Liste Görünümü (her oda ayrı satır) ─────────────────────────────
 function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefresh: () => void }) {
+  const router = useRouter();
   const [editKonut, setEditKonut] = useState<Konut | null>(null);
   const [sozKonut,  setSozKonut]  = useState<Konut | null>(null);
   const [sozOda,    setSozOda]    = useState<string | undefined>(undefined);
@@ -1043,7 +1044,8 @@ function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefre
                 <Fragment key={k.id}>
                   {odaRows.map(({ label, soz }, idx) => (
                     <tr key={label}
-                      className={`transition-colors hover:bg-blue-50/30 ${
+                      onClick={() => router.push(`/konutlar/${k.id}`)}
+                      className={`transition-colors hover:bg-blue-50/30 cursor-pointer ${
                         idx === 0
                           ? "border-t-2 border-gray-200"
                           : "border-t border-dashed border-gray-100"
@@ -1085,9 +1087,9 @@ function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefre
                       </td>
 
                       {/* Kiracı */}
-                      <td className="px-4 py-2">
+                      <td className="px-4 py-2" onClick={(e) => { if (soz?.ogrenci) { e.stopPropagation(); router.push(`/ogrenciler/${soz.ogrenci.id}`); } }}>
                         {soz?.ogrenci ? (
-                          <div>
+                          <div className="hover:underline">
                             <p className="text-sm font-medium text-gray-800">{soz.ogrenci.ad} {soz.ogrenci.soyad}</p>
                             {soz.ogrenci.telefon && soz.ogrenci.telefon !== "-" && (
                               <p className="text-xs text-gray-400">{soz.ogrenci.telefon}</p>
@@ -1109,9 +1111,10 @@ function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefre
 
                       {/* Sahip — sadece Oda 1 satırında */}
                       {idx === 0 && (
-                        <td rowSpan={2} className="px-4 py-2 align-middle text-xs text-gray-500">
+                        <td rowSpan={2} className="px-4 py-2 align-middle text-xs text-gray-500"
+                            onClick={(e) => { if (k.daireSahibi) { e.stopPropagation(); router.push(`/daire-sahipleri/${k.daireSahibi.id}`); } }}>
                           {k.daireSahibi
-                            ? `${k.daireSahibi.ad} ${k.daireSahibi.soyad}`
+                            ? <span className="hover:underline">{k.daireSahibi.ad} {k.daireSahibi.soyad}</span>
                             : <span className="text-gray-300">—</span>}
                         </td>
                       )}
@@ -1124,11 +1127,11 @@ function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefre
                       </td>
 
                       {/* İşlemler */}
-                      <td className="px-4 py-2 text-right">
+                      <td className="px-4 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-1">
                           {!soz && (
                             <button
-                              onClick={() => { setSozKonut(k); setSozOda(label); }}
+                              onClick={(e) => { e.stopPropagation(); setSozKonut(k); setSozOda(label); }}
                               title={`${label} Sözleşme Ekle`}
                               className="p-1.5 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-600 transition-colors">
                               <FileText size={13} />
@@ -1137,11 +1140,11 @@ function Etap2ListeGorunum({ konutlar, onRefresh }: { konutlar: Konut[]; onRefre
                           {/* Daire düzenle + sahip ata — sadece Oda 2 satırında (altta görünsün) */}
                           {idx === 1 && (
                             <>
-                              <button onClick={() => setEditKonut(k)} title="Daireyi Düzenle"
+                              <button onClick={(e) => { e.stopPropagation(); setEditKonut(k); }} title="Daireyi Düzenle"
                                 className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
                                 <Pencil size={13} />
                               </button>
-                              <button onClick={() => setSahKonut(k)} title="Sahip Ata"
+                              <button onClick={(e) => { e.stopPropagation(); setSahKonut(k); }} title="Sahip Ata"
                                 className="p-1.5 rounded hover:bg-emerald-50 text-gray-400 hover:text-emerald-600 transition-colors">
                                 <UserCheck size={13} />
                               </button>
