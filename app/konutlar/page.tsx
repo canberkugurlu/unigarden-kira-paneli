@@ -97,6 +97,26 @@ function getDaireTema(konut: Konut): BlokTema {
   return TEMA_APART;
 }
 
+// ─── Doluluk Halka Grafiği ──────────────────────────────────────────────
+function DolulukRing({ yuzde, size = 40, stroke = 4 }: { yuzde: number; size?: number; stroke?: number }) {
+  const y = Math.max(0, Math.min(100, Math.round(yuzde)));
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ * (1 - y / 100);
+  const renk = y >= 90 ? "#dc2626" : y >= 50 ? "#f59e0b" : y > 0 ? "#10b981" : "#d1d5db";
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size/2} cy={size/2} r={radius} stroke="#f3f4f6" strokeWidth={stroke} fill="none" />
+        <circle cx={size/2} cy={size/2} r={radius} stroke={renk} strokeWidth={stroke} fill="none"
+                strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+                style={{ transition: "stroke-dashoffset 400ms ease" }} />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-gray-700">%{y}</span>
+    </div>
+  );
+}
+
 function sortDaireler(konutlar: Konut[]) {
   return [...konutlar].sort((a, z) => {
     if (a.blok !== z.blok) return a.blok.localeCompare(z.blok);
@@ -495,7 +515,10 @@ function BlokGrubu({ blok, daireler, onRefresh }: {
             </p>
           </div>
         </div>
-        {acik ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        <div className="flex items-center gap-3">
+          <DolulukRing yuzde={daireler.length > 0 ? (doluSayisi / daireler.length) * 100 : 0} />
+          {acik ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+        </div>
       </button>
 
       {acik && (
@@ -824,7 +847,8 @@ function Etap2AltBlok({ blok, daireler, onRefresh }: {
             <button onClick={() => setGorunum("liste")} title="Liste" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><List size={13} /></button>
           </div>
         )}
-        <button onClick={() => setAcik(a => !a)}>
+        <DolulukRing size={34} yuzde={daireler.length > 0 ? (doluSayisi / daireler.length) * 100 : 0} />
+        <button onClick={() => setAcik(a => !a)} className="ml-2">
           {acik ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
         </button>
       </div>
@@ -953,7 +977,8 @@ function Etap2BlokGrubu({ parentBlok, konutlar, onRefresh }: {
             <button onClick={() => setGorunum("liste")} title="Liste Görünümü" className={`p-1.5 rounded transition-colors ${gorunum === "liste" ? tema.btnActive : `text-gray-400 ${tema.btnHover}`}`}><List size={14} /></button>
           </div>
         )}
-        <button onClick={() => setAcik(a => !a)}>
+        <DolulukRing yuzde={konutlar.length > 0 ? (doluSayisi / konutlar.length) * 100 : 0} />
+        <button onClick={() => setAcik(a => !a)} className="ml-2">
           {acik ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
         </button>
       </div>
@@ -1278,7 +1303,8 @@ function EtapKartBlokGrubu({ blok, daireler, onRefresh }: { blok: string; dairel
           <p className="font-semibold text-gray-800 text-sm">{blok} Blok</p>
           <p className="text-xs text-gray-400">{daireler.length} daire · {doluSayisi} dolu · {daireler.length - doluSayisi} boş</p>
         </div>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-3">
+          <DolulukRing yuzde={daireler.length > 0 ? (doluSayisi / daireler.length) * 100 : 0} />
           {acik ? <ChevronUp size={15} className="text-gray-400" /> : <ChevronDown size={15} className="text-gray-400" />}
         </div>
       </button>
