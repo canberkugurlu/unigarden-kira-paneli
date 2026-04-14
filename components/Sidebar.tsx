@@ -16,6 +16,7 @@ import {
   Megaphone,
   ShieldCheck,
   ChevronDown,
+  History,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -71,6 +72,7 @@ const MENU = [
     items: [
       { href: "/kullanicilar", label: "Kullanıcılar",      icon: Users },
       { href: "/izinler",      label: "Rol İzin Yönetimi", icon: ShieldCheck },
+      { href: "/loglar",       label: "İşlem Logları",     icon: History },
     ],
   },
 ];
