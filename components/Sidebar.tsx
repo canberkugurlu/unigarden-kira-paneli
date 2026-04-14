@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   ChevronDown,
   History,
+  LogIn,
 } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -56,24 +57,12 @@ const MENU = [
     ],
   },
   {
-    baslik: "MUHASEBe PANELİ",
-    hariciLink: true,
-    items: [
-      { href: "http://localhost:3003",                    label: "Ana Panel",          icon: LayoutDashboard, harici: true },
-      { href: "http://localhost:3003/odeme-import",       label: "Ödeme İmport",       icon: TrendingUp,      harici: true },
-      { href: "http://localhost:3003/aidatlar",           label: "Aidatlar",           icon: BarChart3,       harici: true },
-      { href: "http://localhost:3003/servis-faturalari",  label: "Servis Faturaları",  icon: Wrench,          harici: true },
-      { href: "http://localhost:3003/teslim-raporlari",   label: "Teslim Raporları",   icon: FileText,        harici: true },
-      { href: "http://localhost:3003/turnike",            label: "Turnike Logları",    icon: ShieldCheck,     harici: true },
-      { href: "http://localhost:3003/mesajlar",           label: "Mesajlaşma",         icon: Megaphone,       harici: true },
-    ],
-  },
-  {
     baslik: "YÖNETİM",
     items: [
-      { href: "/kullanicilar", label: "Kullanıcılar",      icon: Users },
-      { href: "/izinler",      label: "Rol İzin Yönetimi", icon: ShieldCheck },
-      { href: "/loglar",       label: "İşlem Logları",     icon: History },
+      { href: "/kullanicilar",       label: "Kullanıcılar",         icon: Users },
+      { href: "/izinler",            label: "Rol İzin Yönetimi",    icon: ShieldCheck },
+      { href: "/panellere-erisim",   label: "Panellere Erişim",     icon: LogIn },
+      { href: "/loglar",             label: "İşlem Logları",        icon: History },
     ],
   },
 ];
