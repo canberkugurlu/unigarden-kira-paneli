@@ -18,6 +18,7 @@ import {
   ChevronDown,
   History,
   LogIn,
+  Workflow,
 } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
@@ -54,6 +55,12 @@ const MENU = [
     items: [
       { href: "/bakim-talepleri", label: "Bakım Talepleri", icon: Wrench },
       { href: "/duyurular",       label: "Duyurular",       icon: Megaphone },
+    ],
+  },
+  {
+    baslik: "OTOMASYON",
+    items: [
+      { href: "/senaryolar",         label: "Senaryolar",           icon: Workflow },
     ],
   },
   {

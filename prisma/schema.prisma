@@ -491,3 +491,84 @@ model IslemLog {
   @@index([targetType, targetId])
   @@index([kullaniciId])
 }
+
+// ── Senaryo / Workflow Motoru ────────────────────────────────────────────
+// Admin, multi-step iş akışlarını tasarlar.
+// Her akış (instance) bir senaryonun somut çalıştırılmasıdır.
+
+model Senaryo {
+  id            String   @id @default(cuid())
+  ad            String
+  aciklama      String?
+  hedefModel    String   // "Sozlesme" | "Konut" | "Ogrenci" | "BakimTalebi" | "Genel"
+  tetikleyici   String?  // "manuel" | "yeni-sozlesme" | vb — ileride otomatik tetik için
+  aktif         Boolean  @default(true)
+  olusturanId   String?
+  olusturanAd   String?
+  olusturmaTar  DateTime @default(now())
+
+  adimlar       SenaryoAdim[]
+  akislar       SenaryoAkisi[]
+
+  @@index([hedefModel])
+  @@index([aktif])
+}
+
+model SenaryoAdim {
+  id           String   @id @default(cuid())
+  senaryoId    String
+  senaryo      Senaryo  @relation(fields: [senaryoId], references: [id], onDelete: Cascade)
+  sira         Int
+  ad           String
+  aciklama     String?
+  panel        String   // "admin" | "kiralama" | "muhasebe" | "ev-sahibi" | "kiraci"
+  rol          String?  // Spesifik rol örn "Muhasebeci"; boşsa tüm panel kullanıcıları
+  aksiyon      String   // "onay" | "red-veya-onay" | "bildirim" | "otomatik"
+  sartFieldYol String?  // Gelişmiş: JSON path ile hedef kaydın alanını kontrol eder
+  olusturmaTar DateTime @default(now())
+
+  akisAdimlari SenaryoAkisiAdim[]
+
+  @@index([senaryoId, sira])
+}
+
+model SenaryoAkisi {
+  id             String   @id @default(cuid())
+  senaryoId      String
+  senaryo        Senaryo  @relation(fields: [senaryoId], references: [id])
+  baslik         String   // "Daire A-12 için yeni kira akışı"
+  hedefModel     String
+  hedefId        String?
+  durum          String   @default("Aktif") // Aktif | Tamamlandi | Iptal | Reddedildi
+  baslayanId     String?
+  baslayanAd     String?
+  aktifSira      Int      @default(1)
+  baslamaTar     DateTime @default(now())
+  bitirmeTar     DateTime?
+  notlar         String?
+
+  adimlar        SenaryoAkisiAdim[]
+
+  @@index([durum])
+  @@index([senaryoId])
+  @@index([hedefModel, hedefId])
+}
+
+model SenaryoAkisiAdim {
+  id                String    @id @default(cuid())
+  akisId            String
+  akis              SenaryoAkisi @relation(fields: [akisId], references: [id], onDelete: Cascade)
+  adimId            String
+  adim              SenaryoAdim  @relation(fields: [adimId], references: [id])
+  sira              Int
+  durum             String    @default("Beklemede") // Beklemede | Aktif | Tamamlandi | Reddedildi | Atlandi
+  yapanKullaniciId  String?
+  yapanAd           String?
+  yapanPanel        String?
+  yapilanTar        DateTime?
+  notlar            String?
+  olusturmaTar      DateTime  @default(now())
+
+  @@index([akisId, sira])
+  @@index([durum])
+}
