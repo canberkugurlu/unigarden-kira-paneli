@@ -39,6 +39,7 @@ const MENU = [
       { href: "/daire-sahipleri", label: "Daire Sahipleri", icon: UserCheck },
       { href: "/ogrenciler",     label: "Kiracılar",        icon: Users },
       { href: "/sozlesmeler",    label: "Kira Sözleşmeleri", icon: FileText },
+      { href: "/sozlesme-onay",  label: "Sözleşme Onayları", icon: FileText },
       { href: "/tedarikciler",   label: "Tedarikçiler",     icon: Truck },
     ],
   },
