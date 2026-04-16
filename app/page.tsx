@@ -124,7 +124,7 @@ export default async function Dashboard() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
             <div className="flex items-center gap-2">
               <Wrench size={17} className="text-orange-500" />
-              <h3 className="font-semibold text-gray-700">Bakım Talepleri</h3>
+              <h3 className="font-semibold text-gray-700">Talepler</h3>
             </div>
             <Link href="/bakim-talepleri" className="flex items-center gap-0.5 text-xs text-emerald-600 hover:text-emerald-700">
               Tümü <ChevronRight size={13} />

@@ -54,7 +54,7 @@ const MENU = [
   {
     baslik: "BAKIM & İLETİŞİM",
     items: [
-      { href: "/bakim-talepleri", label: "Bakım Talepleri", icon: Wrench },
+      { href: "/bakim-talepleri", label: "Talepler", icon: Wrench },
       { href: "/duyurular",       label: "Duyurular",       icon: Megaphone },
     ],
   },

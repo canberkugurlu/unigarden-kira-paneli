@@ -674,7 +674,7 @@ export default function DaireKartPage() {
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex items-center gap-2">
             <Wrench size={15} className="text-gray-500" />
-            <h3 className="text-sm font-semibold text-gray-700">Bakım Talepleri</h3>
+            <h3 className="text-sm font-semibold text-gray-700">Talepler</h3>
           </div>
           {konut.bakimTalepleri.length === 0 ? (
             <div className="p-10 text-center text-gray-400 text-sm">Bakım talebi bulunmuyor.</div>
