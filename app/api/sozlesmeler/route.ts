@@ -11,7 +11,8 @@ function sozlesmeNo() {
 
 export async function GET() {
   const sozlesmeler = await prisma.sozlesme.findMany({
-    include: { konut: true, ogrenci: true },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    include: { konut: true, ogrenci: true, onaylar: true as any },
     orderBy: { olusturmaTar: "desc" },
   });
   return NextResponse.json(sozlesmeler);

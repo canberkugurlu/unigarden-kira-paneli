@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Plus, FileText, Download, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, FileText, Download, Pencil, Trash2, Search, X, CheckCircle, Clock, Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import * as XLSX from "xlsx";
+
+interface Onay {
+  onaylayan: string;
+  onaylayanAd: string;
+  tarih: string;
+}
 
 interface Sozlesme {
   id: string; sozlesmeNo: string; durum: string;
@@ -13,6 +19,68 @@ interface Sozlesme {
   baslangicTarihi: string; bitisTarihi: string; ozelSartlar?: string;
   konut: { id: string; daireNo: string; blok: string };
   ogrenci: { id: string; ad: string; soyad: string };
+  onaylar?: Onay[];
+}
+
+const ONAYLAYANLAR = [
+  { key: "KiralamaSorumlusu", label: "Kiralama Sorumlusu" },
+  { key: "Muhasebeci", label: "Muhasebe" },
+  { key: "Admin", label: "Yönetici" },
+];
+
+function OnaylarModal({ s, onClose }: { s: Sozlesme; onClose: () => void }) {
+  const fmtT = (d: string) => format(new Date(d), "d MMM yyyy HH:mm", { locale: tr });
+  const onaylar = s.onaylar ?? [];
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+              <Users size={16} className="text-emerald-600" /> Onay Durumu
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5 font-mono">{s.sozlesmeNo}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100"><X size={16} /></button>
+        </div>
+        <div className="p-5 space-y-3">
+          <div className="bg-gray-50 rounded-xl p-3 text-sm">
+            <span className="font-medium">{s.ogrenci.ad} {s.ogrenci.soyad}</span>
+            <span className="text-gray-400 mx-2">·</span>
+            <span className="text-gray-500">Blok {s.konut.blok} / {s.konut.daireNo}</span>
+          </div>
+          <div className="space-y-0">
+            {ONAYLAYANLAR.map(({ key, label }) => {
+              const onay = onaylar.find(o => o.onaylayan === key);
+              return (
+                <div key={key} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                  <div className="flex items-center gap-3">
+                    {onay
+                      ? <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                      : <Clock size={16} className="text-gray-300 shrink-0" />}
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{label}</p>
+                      {onay && <p className="text-xs text-emerald-600 font-medium">{onay.onaylayanAd}</p>}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {onay
+                      ? <span className="text-xs text-gray-400">{fmtT(onay.tarih)}</span>
+                      : <span className="text-xs text-gray-400">Bekliyor</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {onaylar.length === 3 && (
+            <div className="bg-emerald-50 rounded-xl p-3 text-center text-sm text-emerald-700 font-medium flex items-center justify-center gap-2">
+              <CheckCircle size={14} /> Tüm onaylar tamamlandı
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const DURUM_RENK: Record<string, string> = {
@@ -76,6 +144,7 @@ function EditModal({ s, onClose, onSaved }: { s: Sozlesme; onClose: () => void; 
 export default function SozlesmelerPage() {
   const [sozlesmeler, setSozlesmeler] = useState<Sozlesme[]>([]);
   const [editItem, setEditItem] = useState<Sozlesme | null>(null);
+  const [detayItem, setDetayItem] = useState<Sozlesme | null>(null);
   const [silOnay, setSilOnay] = useState<string | null>(null);
   const [arama, setArama]     = useState("");
   const [durumFiltre, setDurumFiltre] = useState("");
@@ -164,6 +233,7 @@ export default function SozlesmelerPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => setDetayItem(s)} title="Onaylar" className="p-1.5 rounded hover:bg-emerald-50 text-gray-400 hover:text-emerald-600"><Users size={14} /></button>
                     <button onClick={() => setEditItem(s)} className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><Pencil size={14} /></button>
                     <button onClick={() => setSilOnay(s.id)} className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600"><Trash2 size={14} /></button>
                   </div>
@@ -177,6 +247,7 @@ export default function SozlesmelerPage() {
         </table>
       </div>
 
+      {detayItem && <OnaylarModal s={detayItem} onClose={() => setDetayItem(null)} />}
       {editItem && <EditModal s={editItem} onClose={() => setEditItem(null)} onSaved={load} />}
       {silOnay && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
