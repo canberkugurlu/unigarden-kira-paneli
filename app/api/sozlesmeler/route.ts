@@ -49,12 +49,24 @@ export async function POST(req: Request) {
         depozito: Number(body.depozito),
         kiraOdemGunu: Number(body.kiraOdemGunu),
         ozelSartlar: body.ozelSartlar || null,
-        durum: "Aktif",
+        durum: body.durum ?? "BekleniyorImza",
         oda: body.oda || null,
       },
       include: { konut: true, ogrenci: true },
     });
     await prisma.konut.update({ where: { id: body.konutId }, data: { durum: "Dolu" } });
+
+    // Cross-panel: kiralama CRM'deki lead durumunu güncelle
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lead = await (prisma.potansiyelMusteri as any).findFirst({ where: { ogrenciId: body.ogrenciId } });
+      if (lead) {
+        const yeniDurum = (sozlesme.durum === "Aktif") ? "AktifKiraci" : "SozlesmeAsamasi";
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (prisma.potansiyelMusteri as any).update({ where: { id: lead.id }, data: { durum: yeniDurum } });
+      }
+    } catch { /* lead yoksa sessizce atla */ }
+
     return NextResponse.json(sozlesme, { status: 201 });
   } catch (err) {
     console.error("Sözleşme oluşturma hatası:", err);
